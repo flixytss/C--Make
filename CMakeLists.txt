@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 
 project(C++Make
-    LANGUAGES C CXX
+    LANGUAGES CXX
     VERSION 1.0
     DESCRIPTION "A Compilation Helper"
 )
