@@ -23,13 +23,15 @@ The file will be like this
 
 ### Sections
 The file is divided by sections: File, Info, Run, Etc... Normally the first section is the File section, But you can move the sections behind or in front of others sections
-because the code flow dosen't matter, The File section is where you add the files to the Makefile. Like this
+because the **code flow dosen't matter**, The File section is where you add the files to the Makefile. Like this  
+**Everything must be in a newline**
 
 #### File
 ``` bash
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 #: Compiling args
 #: Out
@@ -39,7 +41,7 @@ src/main2.cc
 #: Run
 #: Compilers filters
 ```
-For each of the files you have to use a newline
+You can add a directory and it will add all the files inside the directory, You can also put a argument for get the file with the wanted extension
 
 #### Link args
 ``` bash
@@ -60,7 +62,7 @@ src .cc
 #: Run
 #: Compilers filters
 ```
-For everything you need a newline (Comments and statements), This will add arguments to the final link to get the executable, Also you can add a directory and it will add all the files inside the directory, You can also put a argument for get all the files inside with the wanted extension
+For everything you need a newline (Comments and statements), This will add arguments to the final link to get the executable
 
 #### Compiling args
 ``` bash
@@ -82,7 +84,7 @@ src .cc
 #: Run
 #: Compilers filters
 ```
-This will add the argument to the selected compiler
+This will add the argument to the selected compiler, But you can use "All" as a compiler for use it for all the compilers
 
 #### Out
 ``` bash
@@ -149,13 +151,13 @@ home
 #: Project
 C++Make
 #: Include
-includes
-home/etc
+includes All
+home/etc All
 #: Info
 #: Run
 #: Compilers filters
 ```
-To include directories
+To include directories, This is the same as the Compiler args. **You have to select the compiler**
 
 #### Info
 ``` bash
@@ -175,14 +177,17 @@ home
 #: Project
 C++Make
 #: Include
-includes
-home/etc
+includes All
+home/etc All
 #: Info
 UseCcache
 #: Run
 #: Compilers filters
 ```
-This is to set configurations (`UseCcache`), Now there is just one, Bust there is gonna be more
+`#: Info` Is for putting extra configs like:
+- UseCcache - If it is in, the Makefile will use ccache
+- AddClean - This will add a "clean" function
+- Linker - This is for add a personalized linker
 
 #### Run
 ``` bash
@@ -202,8 +207,8 @@ home
 #: Project
 C++Make
 #: Include
-includes
-home/etc
+includes All
+home/etc All
 #: Info
 UseCcache
 #: Run
@@ -230,8 +235,8 @@ home
 #: Project
 C++Make
 #: Include
-includes
-home/etc
+includes All
+home/etc All
 #: Info
 UseCcache
 #: Run
@@ -247,6 +252,6 @@ Just to put a compiler to every file extension you are using
 
 ### Extra Info
 
-The code flow does not matter.  
-To make a comment, Use '#' in a newline.  
-And report for any bug
+- The **code flow does not matter**.  
+- To make a comment, Use '#' in a newline.  
+- And report for any *bug*
