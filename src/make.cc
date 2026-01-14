@@ -70,22 +70,33 @@ void AddArguments(EntryInfo Inf, File* _file) {
         }
     }
 }
-void SetCompiler(std::vector<enum Compilers> CompilersInUse, enum Compilers l, std::string* ActualCompiler) {         
+std::string SetCompiler(std::vector<enum Compilers> CompilersInUse, enum Compilers l) {         
     int ___idnex = 0;
+    std::string ActualCompiler = "$";
     for (const enum Compilers& Com : CompilersInUse) {
         if (Com == l)
-            *ActualCompiler = "${Var" + std::to_string(___idnex) + '}';
+            ActualCompiler = "${Var" + std::to_string(___idnex) + '}';
         ___idnex++;
     }
+    return ActualCompiler;
 }
 void MakeFile(EntryInfo inf) {
-    const std::string file = "Makefile";
+    const std::string file = inf.OutputFile.empty() ? "Makefile" : inf.OutputFile;
     std::vector<std::string> Outs;
 
-    File run {"", "", ""}; // For the Run command
-    run.command = inf.Run.size() ? "echo \"[INFO] Running commands...\"\n" : "";
+    if (inf.CleanUpFirst) {
+        File clean {"", "", ""};
+        clean.command = inf.CleanUpFirst ? "echo \"[INFO] Cleaning...\"\n\t-@rm " + inf.BuildDirectory + "/*" : "";
 
-    Function funcrun {"Run", run};
+        Function cleanrun {"clean", clean};
+
+        Functions.push_back(cleanrun);
+    }
+
+    File run {"", "", ""}; // For the Run command
+    run.command = inf.Run.size() ? ("echo \"[INFO] Running commands...\"\n") : "";
+
+    Function funcrun {"run", run};
 
     for (const std::string& _run : inf.Run)
         funcrun.Utils.push_back(_run);
@@ -93,7 +104,6 @@ void MakeFile(EntryInfo inf) {
     Functions.push_back(funcrun);
 
     uint Index = 0;
-    enum Compilers _Compiler;
     for (const std::string& filex : inf.Files) {
         for (const auto& tuple : inf.CompilerFilter) {
             if (filex.ends_with(std::get<0>(tuple)))
@@ -103,52 +113,44 @@ void MakeFile(EntryInfo inf) {
 
     std::vector<enum Compilers> CompilersInUse; // Making Variables of compilers
     for (const std::string& filex : inf.Files) {
-        const fs::path path = fs::u8path(filex);
+        const fs::path path = fs::path(filex);
         enum Compilers filex_C = GetCompiler((std::string){path.filename()});
 
         std::vector<enum Compilers>::iterator it = std::find(CompilersInUse.begin(), CompilersInUse.end(), filex_C);
         if (it == CompilersInUse.end())
             CompilersInUse.push_back(filex_C);
-    } // CHECK IF ERROR
+    }
 
     for (const std::string& file : inf.Files) {
-        const fs::path path = fs::u8path(file);
-
-        // Define file extension
-        const enum Compilers Compiler = GetCompiler((std::string){path.filename()});
-        _Compiler = Compiler;
+        const fs::path path = fs::path(file);
 
         File _file {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + "clang++"};
 
-        int ___idnex = 0; // Just for the loop, That's why it has that name
+        int JustAConuter = 0;
         for (const auto& tuple : inf.CompilerFilter) {
             if ((std::string){path.filename()}.ends_with(std::get<0>(tuple))) {
                 _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + std::get<1>(tuple)}; break;
             }
         }
         std::string ActualCompiler;
-        switch (Compiler) {
+        switch (const enum Compilers Compiler = GetCompiler((std::string){path.filename()})) {
             case CC:
-                ActualCompiler = "$";
-                SetCompiler(CompilersInUse, CC, &ActualCompiler);
+                ActualCompiler = SetCompiler(CompilersInUse, CC);
                 _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + ActualCompiler};
                 AddArguments(inf, &_file);
                 break;
             case CLANGPLUSPLUS:
-                ActualCompiler = "$";
-                SetCompiler(CompilersInUse, CLANGPLUSPLUS, &ActualCompiler);
+                ActualCompiler = SetCompiler(CompilersInUse, CLANGPLUSPLUS);
                 _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + ActualCompiler};
                 AddArguments(inf, &_file);
                 break;
             case CLANG:
-                ActualCompiler = "$";
-                SetCompiler(CompilersInUse, CC, &ActualCompiler);
+                ActualCompiler = SetCompiler(CompilersInUse, CLANG);
                 _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + ActualCompiler};
                 AddArguments(inf, &_file);
                 break;
             case NASM:
-                ActualCompiler = "$";
-                SetCompiler(CompilersInUse, NASM, &ActualCompiler);
+                ActualCompiler = SetCompiler(CompilersInUse, NASM);
                 _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + ActualCompiler};
                 AddArguments(inf, &_file);
                 break;
@@ -166,9 +168,9 @@ void MakeFile(EntryInfo inf) {
     File f {"", "", ""}; // For the link command
     
     if (inf.Compiler.empty())
-        f.command = Compilers[_Compiler] + " ";
+        f.command = (inf.Linker.empty() ? Compilers[CompilersInUse[0]] : inf.Linker) + " ";
     else
-        f.command = inf.Compiler + " ";
+        f.command = (inf.Linker.empty() ? inf.Compiler : inf.Linker) + " ";
     for (const std::string& out : Outs)
         f.command += inf.BuildDirectory + (inf.BuildDirectory.empty() ?  "" : "/") + out + " ";
     const std::string AppPath = inf.BuildDirectory + (inf.BuildDirectory.empty() ? (inf.ProjectName.empty() ? "a.out" : inf.ProjectName) : (inf.ProjectName.empty() ? "/a.out" : "/" + inf.ProjectName));
@@ -183,10 +185,10 @@ void MakeFile(EntryInfo inf) {
 
     WriteFile(file, "# Generated Makefile, Just a template. You can modify me\n\n"); // Init Makefile
 
-    int ___idnex = 0; // Just for the loop, That's why it has that name
+    int JustAConuter = 0;
     for (const enum Compilers& Com : CompilersInUse) {
-        AppendFile(file, std::format("Var{} = {}\n", ___idnex, Compilers[Com]));
-        ___idnex++;
+        AppendFile(file, std::format("Var{} = {}\n", JustAConuter, Compilers[Com]));
+        JustAConuter++;
     }
     AppendFile(file, "\n");
 

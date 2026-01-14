@@ -30,4 +30,7 @@ typedef struct EntryInfo {
     std::string Compiler = "";
     std::vector<std::string> Run;
     std::vector<std::tuple<std::string, std::string>> CompilerFilter;
+    std::string OutputFile = "";
+    std::string Linker = "";
+    bool CleanUpFirst = false;
 } EntryInfo;

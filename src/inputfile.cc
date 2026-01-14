@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <sstream>
@@ -59,32 +60,32 @@ constexpr int _str2int(std::string str) {
 EntryInfo GetInf(std::string File) {
     std::vector<std::string> Buffer = GetLines(File);
 
-    std::string Mode = "File";
+    std::string ReadMode = "File";
     EntryInfo Inf;
 
-    uint _Index = 0;
+    int _Index = 0;
     for (const std::string& Line : Buffer) {
         if (Line.starts_with("#: ")) {
             std::string Parameter = getfromindex(Line, 3);
             switch (_str2int(Parameter)) {
                 case _str2int("File"):
-                    Mode = "File"; break;
+                    ReadMode = "File"; break;
                 case _str2int("Link args"):
-                    Mode = "Largs"; break;
+                    ReadMode = "Largs"; break;
                 case _str2int("Compiling args"):
-                    Mode = "Cargs"; break;
+                    ReadMode = "Cargs"; break;
                 case _str2int("Out"):
-                    Mode = "Out"; break;
+                    ReadMode = "Out"; break;
                 case _str2int("Project"):
-                    Mode = "Project"; break;
+                    ReadMode = "Project"; break;
                 case _str2int("Include"):
-                    Mode = "Include"; break;
+                    ReadMode = "Include"; break;
                 case _str2int("Info"):
-                    Mode = "Info"; break;
+                    ReadMode = "Info"; break;
                 case _str2int("Run"):
-                    Mode = "Run"; break;
+                    ReadMode = "Run"; break;
                 case _str2int("Compilers filters"):
-                    Mode = "Compilersfilters"; break;
+                    ReadMode = "Compilersfilters"; break;
                 default:
                     if (!Line.starts_with("#")) {
                         std::println("File syntax error");
@@ -93,17 +94,29 @@ EntryInfo GetInf(std::string File) {
             }
         }
         std::vector<std::string> l = split(Line);;
-        switch (_str2int(Mode)) {
+        switch (_str2int(ReadMode)) {
             case _str2int("File"):
                 if (Line.starts_with("#")) continue;
-                Inf.Files.push_back(Line); break;
+                // Check if the "file" is a directory
+                if (std::filesystem::is_directory(l[0])) {
+                    for (const auto& path : std::filesystem::directory_iterator(l[0])) {
+                        if (l.back() != l.front()) {
+                            if ((std::string){path.path().filename()}.ends_with(l[1]))
+                                Inf.Files.push_back(path.path());
+                        } else
+                            Inf.Files.push_back(path.path());
+                        //std::println("{}", (std::string){path.path()});
+                    }
+                } else
+                    Inf.Files.push_back(l[0]);
+                break;
             case _str2int("Largs"):
                 if (Line.starts_with("#")) continue;
                 Inf.LinkArgs.push_back(Line); break;
             case _str2int("Cargs"):
                 if (Line.starts_with("#")) continue;
                 if (l.back() == l.front()) {
-                    std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\"", REDB, RESET, Line);
+                    std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                     Finish(1);
                 }
                 Inf.CompileArgs.push_back(std::make_tuple(l[0], l[1])); break;
@@ -116,7 +129,7 @@ EntryInfo GetInf(std::string File) {
             case _str2int("Include"):
                 if (Line.starts_with("#")) continue;
                 if (l.back() == l.front()) {
-                    std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\"", REDB, RESET, Line);
+                    std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\", Line {}", REDB, RESET, Line, _Index); // FIX
                     Finish(1);
                 }
                 Inf.CompileArgs.push_back(std::make_tuple("-I " + l[0], l[1])); break;
@@ -125,8 +138,22 @@ EntryInfo GetInf(std::string File) {
                 switch (_str2int(l[0])) {
                     case _str2int("UseCcache"):
                         Inf.Ccache = true; break;
+                    case _str2int("AddClean"):
+                        Inf.CleanUpFirst = true; break;
+                    case _str2int("OutputFile"):
+                        if (l.back() == l.front()) {
+                            std::println("{}ERR{}: Set the Output file name, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            Finish(1);
+                        }
+                        Inf.OutputFile = l[1]; break;
+                    case _str2int("Linker"):
+                        if (l.back() == l.front()) {
+                            std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            Finish(1);
+                        }
+                        Inf.Linker = l[1]; break;
                     default:
-                        std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l.at(0));
+                        std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l[0]);
                         Finish(1);
                         break;
                 } break;

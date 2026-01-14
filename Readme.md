@@ -1,4 +1,4 @@
-# C--Make (C++Make but github change it)
+# C--Make (C++Make but github changed it)
 
 ## Information about it
 C++Make is a Makefile Generator. Made it with C++, Here is a usage example
@@ -46,6 +46,7 @@ For each of the files you have to use a newline
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 -lcurl
 -lm
@@ -59,13 +60,14 @@ src/main2.cc
 #: Run
 #: Compilers filters
 ```
-For everything you need a newline (Comments and statements), This will add arguments to the final link to get the executable
+For everything you need a newline (Comments and statements), This will add arguments to the final link to get the executable, Also you can add a directory and it will add all the files inside the directory, You can also put a argument for get all the files inside with the wanted extension
 
 #### Compiling args
 ``` bash
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 -lcurl
 -lm
@@ -87,6 +89,7 @@ This will add the argument to the selected compiler
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 -lcurl
 -lm
@@ -109,6 +112,7 @@ For putting the Out directory for all the files
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 -lcurl
 -lm
@@ -132,6 +136,7 @@ For the executable name
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 -lcurl
 -lm
@@ -157,6 +162,7 @@ To include directories
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 -lcurl
 -lm
@@ -183,6 +189,7 @@ This is to set configurations (`UseCcache`), Now there is just one, Bust there i
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 -lcurl
 -lm
@@ -210,6 +217,7 @@ Just to put command to execute before the compilation
 #: File
 src/main.cc
 src/main2.cc
+src .cc
 #: Link args
 -lcurl
 -lm
