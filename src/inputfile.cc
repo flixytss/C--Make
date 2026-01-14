@@ -125,12 +125,6 @@ EntryInfo GetInf(std::string File) {
                 switch (_str2int(l[0])) {
                     case _str2int("UseCcache"):
                         Inf.Ccache = true; break;
-                    case _str2int("UseCompiler"):
-                        if (l.back() == "UseCompiler") {
-                            std::println("{}ERR{}: Compiler not selected", REDB, RESET);
-                            Finish(1);
-                        }
-                        Inf.Compiler = l.back(); break;
                     default:
                         std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l.at(0));
                         Finish(1);
