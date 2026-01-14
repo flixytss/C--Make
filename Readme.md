@@ -241,4 +241,4 @@ Just to put a compiler to every file extension you are using
 
 The code flow does not matter.  
 To make a comment, Use '#' in a newline.  
-And report for a bug
+And report for any bug
