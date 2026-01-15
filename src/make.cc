@@ -59,7 +59,6 @@ void AddArguments(EntryInfo Inf, File* _file) {
         const std::string Arg = std::get<0>(tuple);
         const std::string _Compiler = std::get<1>(tuple);
         if (_Compiler != "All") {
-            std::println("{} {}", _Compiler, Inf.Compiler == _Compiler);
             if (Compilers[GetCompiler(_file->path)] == _Compiler) {
                 _file->args.push_back(Arg);
                 _file->Recalculate();

@@ -188,6 +188,7 @@ UseCcache
 - UseCcache - If it is in, the Makefile will use ccache
 - AddClean - This will add a "clean" function
 - Linker - This is for add a personalized linker
+- OutputFile - Change the output filename
 
 #### Run
 ``` bash
@@ -255,3 +256,8 @@ Just to put a compiler to every file extension you are using
 - The **code flow does not matter**.  
 - To make a comment, Use '#' in a newline.  
 - And report for any *bug*
+
+You can rename your config file to:
+- win.conf - C++Make will use that file for windows
+- linux.conf - C++Make will use that file for linux
+- mac.conf - C++Make will use that file for macos
