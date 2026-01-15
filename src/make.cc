@@ -81,7 +81,6 @@ std::string SetCompiler(std::vector<enum Compilers> CompilersInUse, enum Compile
     return ActualCompiler;
 }
 void MakeFile(EntryInfo* inf) {
-    std::println("{:p}", static_cast<void*>(inf));
     if (!inf) {
         std::println("{}ERR{}: Entry Information not defined", REDB, RESET);
         Finish(1);
