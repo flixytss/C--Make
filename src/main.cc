@@ -7,8 +7,8 @@
 
 EntryInfo inf;
 
-extern void MakeFile(EntryInfo inf);
-EntryInfo GetInf(std::string File);
+extern void MakeFile(EntryInfo* inf);
+extern EntryInfo* GetInf(std::string File);
 
 constexpr int str2int(std::string str) {
     uint num = 0;
@@ -18,7 +18,7 @@ constexpr int str2int(std::string str) {
 int main(int argc, char** argv) {
     if (argc < 1)
         Finish(0);
-    EntryInfo Inf;
+    EntryInfo* Inf;
 
     for (int Index = 0; Index < argc; Index++) {
         const std::string Arg = argv[Index];
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
                     Finish(0);
                 }
                 Inf = GetInf(argv[Index + 1] ? argv[Index + 1] : "create.conf");
-                if (!Inf.Files.size()) {
+                if (!Inf->Files.size()) {
                     std::println("{}ERR{}: Why would i make a Makefile with no files to compile?", REDB, RESET);
                     Finish(1);
                 }
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
                 break;
         }
     }
-    if (inf.Files.size() > 0) MakeFile(inf);
+    if (inf.Files.size() > 0) MakeFile(Inf);
 
     Finish(0);
 }

@@ -80,13 +80,19 @@ std::string SetCompiler(std::vector<enum Compilers> CompilersInUse, enum Compile
     }
     return ActualCompiler;
 }
-void MakeFile(EntryInfo inf) {
-    const std::string file = inf.OutputFile.empty() ? "Makefile" : inf.OutputFile;
+void MakeFile(EntryInfo* inf) {
+    std::println("{:p}", static_cast<void*>(inf));
+    if (!inf) {
+        std::println("{}ERR{}: Entry Information not defined", REDB, RESET);
+        Finish(1);
+    }
+
+    const std::string file = inf->OutputFile.empty() ? "Makefile" : inf->OutputFile;
     std::vector<std::string> Outs;
 
-    if (inf.CleanUpFirst) {
+    if (inf->CleanUpFirst) {
         File clean {"", "", ""};
-        clean.command = inf.CleanUpFirst ? "echo \"[INFO] Cleaning...\"\n\t-@rm " + inf.BuildDirectory + "/*" : "";
+        clean.command = inf->CleanUpFirst ? "echo \"[INFO] Cleaning...\"\n\t-@rm " + inf->BuildDirectory + "/*" : "";
 
         Function cleanrun {"clean", clean};
 
@@ -94,25 +100,25 @@ void MakeFile(EntryInfo inf) {
     }
 
     File run {"", "", ""}; // For the Run command
-    run.command = inf.Run.size() ? ("echo \"[INFO] Running commands...\"\n") : "";
+    run.command = inf->Run.size() ? ("echo \"[INFO] Running commands...\"\n") : "";
 
     Function funcrun {"run", run};
 
-    for (const std::string& _run : inf.Run)
+    for (const std::string& _run : inf->Run)
         funcrun.Utils.push_back(_run);
 
     Functions.push_back(funcrun);
 
     uint Index = 0;
-    for (const std::string& filex : inf.Files) {
-        for (const auto& tuple : inf.CompilerFilter) {
+    for (const std::string& filex : inf->Files) {
+        for (const auto& tuple : inf->CompilerFilter) {
             if (filex.ends_with(std::get<0>(tuple)))
                 Compilers[GetCompiler(filex)] = std::get<1>(tuple);
         }
     }
 
     std::vector<enum Compilers> CompilersInUse; // Making Variables of compilers
-    for (const std::string& filex : inf.Files) {
+    for (const std::string& filex : inf->Files) {
         const fs::path path = fs::path(filex);
         enum Compilers filex_C = GetCompiler((std::string){path.filename()});
 
@@ -121,45 +127,45 @@ void MakeFile(EntryInfo inf) {
             CompilersInUse.push_back(filex_C);
     }
 
-    for (const std::string& file : inf.Files) {
+    for (const std::string& file : inf->Files) {
         const fs::path path = fs::path(file);
 
-        File _file {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + "clang++"};
+        File _file {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + "clang++"};
 
         int JustAConuter = 0;
-        for (const auto& tuple : inf.CompilerFilter) {
+        for (const auto& tuple : inf->CompilerFilter) {
             if ((std::string){path.filename()}.ends_with(std::get<0>(tuple))) {
-                _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + std::get<1>(tuple)}; break;
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + std::get<1>(tuple)}; break;
             }
         }
         std::string ActualCompiler;
         switch (const enum Compilers Compiler = GetCompiler((std::string){path.filename()})) {
             case CC:
                 ActualCompiler = SetCompiler(CompilersInUse, CC);
-                _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + ActualCompiler};
-                AddArguments(inf, &_file);
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                AddArguments(*inf, &_file);
                 break;
             case CLANGPLUSPLUS:
                 ActualCompiler = SetCompiler(CompilersInUse, CLANGPLUSPLUS);
-                _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + ActualCompiler};
-                AddArguments(inf, &_file);
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                AddArguments(*inf, &_file);
                 break;
             case CLANG:
                 ActualCompiler = SetCompiler(CompilersInUse, CLANG);
-                _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + ActualCompiler};
-                AddArguments(inf, &_file);
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                AddArguments(*inf, &_file);
                 break;
             case NASM:
                 ActualCompiler = SetCompiler(CompilersInUse, NASM);
-                _file = {file.c_str(), (std::string){inf.BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf.Ccache ? "ccache " : "")} + ActualCompiler};
-                AddArguments(inf, &_file);
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                AddArguments(*inf, &_file);
                 break;
             default: break; // Use the CLANG syntaxis by default
         }
         
         Outs.push_back((std::string){path.filename()} + ".o");
         Function func {file + ".o", _file};
-        func.Utils.push_back(std::format("@echo \"[{} Compiling file {} {:.1f}%...{}]\"", GREENB, _file.path, ((float)Index / (inf.Files.size())) * 100, RESET)); // MODIFY
+        func.Utils.push_back(std::format("@echo \"[{} Compiling file {} {:.1f}%...{}]\"", GREENB, _file.path, ((float)Index / (inf->Files.size())) * 100, RESET)); // MODIFY
         Functions.push_back(func);
 
         Index++;
@@ -167,16 +173,16 @@ void MakeFile(EntryInfo inf) {
 
     File f {"", "", ""}; // For the link command
     
-    if (inf.Compiler.empty())
-        f.command = (inf.Linker.empty() ? Compilers[CompilersInUse[0]] : inf.Linker) + " ";
+    if (inf->Compiler.empty())
+        f.command = (inf->Linker.empty() ? Compilers[CompilersInUse[0]] : inf->Linker) + " ";
     else
-        f.command = (inf.Linker.empty() ? inf.Compiler : inf.Linker) + " ";
+        f.command = (inf->Linker.empty() ? inf->Compiler : inf->Linker) + " ";
     for (const std::string& out : Outs)
-        f.command += inf.BuildDirectory + (inf.BuildDirectory.empty() ?  "" : "/") + out + " ";
-    const std::string AppPath = inf.BuildDirectory + (inf.BuildDirectory.empty() ? (inf.ProjectName.empty() ? "a.out" : inf.ProjectName) : (inf.ProjectName.empty() ? "/a.out" : "/" + inf.ProjectName));
+        f.command += inf->BuildDirectory + (inf->BuildDirectory.empty() ?  "" : "/") + out + " ";
+    const std::string AppPath = inf->BuildDirectory + (inf->BuildDirectory.empty() ? (inf->ProjectName.empty() ? "a.out" : inf->ProjectName) : (inf->ProjectName.empty() ? "/a.out" : "/" + inf->ProjectName));
     f.command += "-o " + AppPath;
-    if (inf.LinkArgs.size() > 0)
-        for (const std::string& arg : inf.LinkArgs)
+    if (inf->LinkArgs.size() > 0)
+        for (const std::string& arg : inf->LinkArgs)
             f.command += ' ' + arg;
 
     Function func {"Link", f};

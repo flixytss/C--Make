@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -35,6 +37,14 @@ int findindex(std::string string, char c) {
     }
     return index;
 }
+bool IsItVerySimilar(std::string what, std::string to, int wantedlevel) {
+    int lookedlike = 0;
+    int limit = std::min(what.size(), to.size());
+
+    for (int i = 0;i < limit; i++)
+        if (to[i] == what[i]) lookedlike++;
+    return lookedlike >= wantedlevel;
+}
 std::string getfromindex(std::string str, int index) {
     std::string string = "";
     for (int i = index;i < str.size(); i++)
@@ -57,11 +67,23 @@ constexpr int _str2int(std::string str) {
     for (char i : str) num += i;
     return num;
 }
-EntryInfo GetInf(std::string File) {
+
+const std::string CommandsForSyntaxisFallback[8] = {"File", "Link args", "Out", "Project", "Include", "Info", "Run", "Compilers filters"};
+
+typedef struct OSInfo {
+    EntryInfo* Windows = new EntryInfo{};
+    EntryInfo* Linux = new EntryInfo{};
+    EntryInfo* MacOs = new EntryInfo{};
+    bool inuse = false;
+} OSInfo;
+
+EntryInfo* GetInf(std::string File) {
     std::vector<std::string> Buffer = GetLines(File);
 
     std::string ReadMode = "File";
-    EntryInfo Inf;
+    EntryInfo* Inf;
+    OSInfo Osinf;
+    std::vector<std::tuple<EntryInfo*, std::string>> OSSections;
 
     int _Index = 0;
     for (const std::string& Line : Buffer) {
@@ -86,90 +108,141 @@ EntryInfo GetInf(std::string File) {
                     ReadMode = "Run"; break;
                 case _str2int("Compilers filters"):
                     ReadMode = "Compilersfilters"; break;
+                case _str2int("Windows"):
+                    Osinf.inuse = true;
+                    OSSections.push_back(std::make_tuple(Osinf.Windows, "Windows")); break;
+                case _str2int("Linux"):
+                    Osinf.inuse = true;
+                    OSSections.push_back(std::make_tuple(Osinf.Linux, "Linux")); break;
+                case _str2int("MacOs"):
+                    Osinf.inuse = true;
+                    OSSections.push_back(std::make_tuple(Osinf.MacOs, "MacOs")); break;
                 default:
-                    if (!Line.starts_with("#")) {
-                        std::println("File syntax error");
+                    if (Line.starts_with("#")) {
+                        for (int index = 0; index < 8 /* MODIFY */; index++) { // Modify Every time a new command is created
+                            if (IsItVerySimilar(Parameter, CommandsForSyntaxisFallback[index], strlen(CommandsForSyntaxisFallback[index].c_str()) / 2)) {
+                                std::println("{}ERR{}: Don't you mean {}?, Line: {}", REDB, RESET, CommandsForSyntaxisFallback[index], Line);
+                                Finish(1);
+                            }
+                        }
+                        std::println("{}ERR{}: Syntax error, Line: {}", REDB, RESET, Line);
                         Finish(1);
                     }
             }
         }
-        std::vector<std::string> l = split(Line);;
-        switch (_str2int(ReadMode)) {
-            case _str2int("File"):
-                if (Line.starts_with("#")) continue;
-                // Check if the "file" is a directory
-                if (std::filesystem::is_directory(l[0])) {
-                    for (const auto& path : std::filesystem::directory_iterator(l[0])) {
-                        if (l.back() != l.front()) {
-                            if ((std::string){path.path().filename()}.ends_with(l[1]))
-                                Inf.Files.push_back(path.path());
-                        } else
-                            Inf.Files.push_back(path.path());
-                        //std::println("{}", (std::string){path.path()});
-                    }
-                } else
-                    Inf.Files.push_back(l[0]);
-                break;
-            case _str2int("Largs"):
-                if (Line.starts_with("#")) continue;
-                Inf.LinkArgs.push_back(Line); break;
-            case _str2int("Cargs"):
-                if (Line.starts_with("#")) continue;
-                if (l.back() == l.front()) {
-                    std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
-                    Finish(1);
-                }
-                Inf.CompileArgs.push_back(std::make_tuple(l[0], l[1])); break;
-            case _str2int("Out"):
-                if (Line.starts_with("#")) continue;
-                Inf.BuildDirectory = Line; break;
-            case _str2int("Project"):
-                if (Line.starts_with("#")) continue;
-                Inf.ProjectName = Line; break;
-            case _str2int("Include"):
-                if (Line.starts_with("#")) continue;
-                if (l.back() == l.front()) {
-                    std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\", Line {}", REDB, RESET, Line, _Index); // FIX
-                    Finish(1);
-                }
-                Inf.CompileArgs.push_back(std::make_tuple("-I " + l[0], l[1])); break;
-            case _str2int("Info"):
-                if (Line.starts_with("#")) continue;
-                switch (_str2int(l[0])) {
-                    case _str2int("UseCcache"):
-                        Inf.Ccache = true; break;
-                    case _str2int("AddClean"):
-                        Inf.CleanUpFirst = true; break;
-                    case _str2int("OutputFile"):
-                        if (l.back() == l.front()) {
-                            std::println("{}ERR{}: Set the Output file name, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
-                            Finish(1);
-                        }
-                        Inf.OutputFile = l[1]; break;
-                    case _str2int("Linker"):
-                        if (l.back() == l.front()) {
-                            std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
-                            Finish(1);
-                        }
-                        Inf.Linker = l[1]; break;
-                    default:
-                        std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l[0]);
-                        Finish(1);
-                        break;
-                } break;
-            case _str2int("Compilersfilters"):
-                if (Line.starts_with("#")) continue;
-                // l[0] = Extension
-                // l[1] = Compiler
-                Inf.CompilerFilter.push_back(std::make_tuple(l[0], l[1])); break;
-            case _str2int("Run"):
-                if (Line.starts_with("#")) continue;
-                Inf.Run.push_back(Line); break;
-            default: break;
+
+        if (!OSSections.size()) {
+            #if defined(__APPLE__) && defined(__MACH__)
+                OSSections.push_back(std::make_tuple(Osinf.MacOs, "MacOs")); break;
+            #endif
+            #ifdef _WIN32
+                OSSections.push_back(std::make_tuple(Osinf.Windows, "Windows")); break;
+            #endif
+            #ifdef __linux
+                OSSections.push_back(std::make_tuple(Osinf.Linux, "Linux")); break;
+            #endif
+            // std::println("{}", std::get<1>(OSSections[0]));
         }
 
-        _Index++;
+        for (const auto& tuple : OSSections) {
+            Inf = std::get<0>(tuple);
+
+            switch (_str2int(std::get<1>(tuple))) {
+                case _str2int("Windows"):
+                    #ifndef _WIN32
+                        goto Final;
+                    #endif
+                    break;
+                case _str2int("Linux"):
+                    #ifndef __linux
+                        goto Final;
+                    #endif
+                    break;
+                case _str2int("MacOs"):
+                    #if  !defined(__APPLE__) && !defined(__MACH__)
+                        goto Final;
+                    #endif
+                    break;
+            }
+            std::vector<std::string> l = split(Line);
+            switch (_str2int(ReadMode)) {
+                case _str2int("File"):
+                    if (Line.starts_with("#")) continue;
+                    // Check if the "file" is a directory
+                    if (std::filesystem::is_directory(l[0])) {
+                        for (const auto& path : std::filesystem::directory_iterator(l[0])) {
+                            if (l.back() != l.front()) {
+                                if ((std::string){path.path().filename()}.ends_with(l[1]))
+                                    Inf->Files.push_back(path.path());
+                            } else
+                                Inf->Files.push_back(path.path());
+                            //std::println("{}", (std::string){path.path()});
+                        }
+                    } else
+                        Inf->Files.push_back(l[0]);
+                    break;
+                case _str2int("Largs"):
+                    if (Line.starts_with("#")) continue;
+                    Inf->LinkArgs.push_back(Line); break;
+                case _str2int("Cargs"):
+                    if (Line.starts_with("#")) continue;
+                    if (l.back() == l.front()) {
+                        std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                        Finish(1);
+                    }
+                    Inf->CompileArgs.push_back(std::make_tuple(l[0], l[1])); break;
+                case _str2int("Out"):
+                    if (Line.starts_with("#")) continue;
+                    Inf->BuildDirectory = Line; break;
+                case _str2int("Project"):
+                    if (Line.starts_with("#")) continue;
+                    Inf->ProjectName = Line; break;
+                case _str2int("Include"):
+                    if (Line.starts_with("#")) continue;
+                    if (l.back() == l.front()) {
+                        std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\", Line {}", REDB, RESET, Line, _Index); // FIX
+                        Finish(1);
+                    }
+                    Inf->CompileArgs.push_back(std::make_tuple("-I " + l[0], l[1])); break;
+                case _str2int("Info"):
+                    if (Line.starts_with("#")) continue;
+                    switch (_str2int(l[0])) {
+                        case _str2int("UseCcache"):
+                            Inf->Ccache = true; break;
+                        case _str2int("AddClean"):
+                            Inf->CleanUpFirst = true; break;
+                        case _str2int("OutputFile"):
+                            if (l.back() == l.front()) {
+                                std::println("{}ERR{}: Set the Output file name, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                                Finish(1);
+                            }
+                            Inf->OutputFile = l[1]; break;
+                        case _str2int("Linker"):
+                            if (l.back() == l.front()) {
+                                std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                                Finish(1);
+                            }
+                            Inf->Linker = l[1]; break;
+                        default:
+                            std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l[0]);
+                            Finish(1);
+                            break;
+                    } break;
+                case _str2int("Compilersfilters"):
+                    if (Line.starts_with("#")) continue;
+                    // l[0] = Extension
+                    // l[1] = Compiler
+                    Inf->CompilerFilter.push_back(std::make_tuple(l[0], l[1])); break;
+                case _str2int("Run"):
+                    if (Line.starts_with("#")) continue;
+                    Inf->Run.push_back(Line); break;
+                default: break;
+            }
+
+            _Index++;
+        }
     }
+    Final:
 
     return Inf;
 }
