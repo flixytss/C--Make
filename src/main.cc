@@ -19,6 +19,17 @@ int main(int argc, char** argv) {
     if (argc < 1)
         Finish(0);
     EntryInfo* Inf;
+    std::string os = "N/A";
+
+    #ifdef __linux
+        os = "linux";
+    #endif
+    #ifdef _WIN32
+        os = "win";
+    #endif
+    #ifdef __APPLE__
+        os = "mac";
+    #endif
 
     for (int Index = 0; Index < argc; Index++) {
         const std::string Arg = argv[Index];
@@ -42,6 +53,15 @@ int main(int argc, char** argv) {
                 inf.LinkArgs.push_back(argv[Index + 1]);
                 break;
             case str2int("make"):
+                if ( std::filesystem::exists("mac.conf") && os == "mac" ) {
+                    MakeFile(GetInf("mac.conf")); break;
+                }
+                if ( std::filesystem::exists("win.conf") && os == "win" ) {
+                    MakeFile(GetInf("win.conf")); break;
+                }
+                if ( std::filesystem::exists("linux.conf") && os == "linux" ) {
+                    MakeFile(GetInf("linux.conf")); break;
+                }
                 if ( !std::filesystem::exists("create.conf") ) {
                     WriteFile("create.conf", "#: File\n#: Link args\n#: Compiling args\n#: Out\n#: Project\n#: Include\n#: Info\nUseCcache\n#: Run\n#: Compilers filters"); // FIX
                     Finish(0);
