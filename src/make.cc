@@ -103,7 +103,7 @@ void MakeFile(EntryInfo* inf) {
     Function funcrun {"run", run};
 
     for (const std::string& _run : inf->Run)
-        funcrun.Utils.push_back(_run);
+        if (!_run.empty()) funcrun.Utils.push_back(_run);
 
     Functions.push_back(funcrun);
 
