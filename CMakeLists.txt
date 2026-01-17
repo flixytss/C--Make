@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.19)
 
 project(C++Make
     LANGUAGES CXX
-    VERSION 1.0
-    DESCRIPTION "A Compilation Helper"
+    VERSION 2.0
+    DESCRIPTION "A Makefile Generator, Just that..."
 )
 
 set(CMAKE_CXX_STANDARD 23)

@@ -1,6 +1,7 @@
 #include <files.h>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <print>
 #include <string>
 #include <exutils.h>
@@ -53,6 +54,15 @@ int main(int argc, char** argv) {
                 inf.LinkArgs.push_back(argv[Index + 1]);
                 break;
             case str2int("make"):
+                if ((std::string){argv[Index + 1] ? argv[Index + 1] : ""} == "template") {
+                    std::filesystem::create_directory("src"); // directories
+                    std::filesystem::create_directory("build");
+                    std::filesystem::create_directory("include");
+
+                    std::ofstream mainfile ("src/main.cc"); // file
+
+                    WriteFile("create.conf", "#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
+                }
                 if ( std::filesystem::exists("mac.conf") && os == "mac" ) {
                     MakeFile(GetInf("mac.conf")); break;
                 }
@@ -63,7 +73,7 @@ int main(int argc, char** argv) {
                     MakeFile(GetInf("linux.conf")); break;
                 }
                 if ( !std::filesystem::exists("create.conf") ) {
-                    WriteFile("create.conf", "#: File\n#: Link args\n#: Compiling args\n#: Out\n#: Project\n#: Include\n#: Info\nUseCcache\n#: Run\n#: Compilers filters"); // FIX
+                    WriteFile("create.conf", "#: File\n#: Link args\n#: Compiling args\n#: Out\n#: Project\n#: Include\n#: Info\nUseCcache\n#: Run\n#: Compilers filters");
                     Finish(0);
                 }
                 Inf = GetInf(argv[Index + 1] ? argv[Index + 1] : "create.conf");

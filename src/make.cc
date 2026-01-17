@@ -12,7 +12,7 @@
 
 namespace fs = std::filesystem;
 
-std::string Compilers[4] = {"clang++", "cc", "clang", "nasm"};
+std::vector<std::string> Compilers = {"clang++", "cc", "clang", "nasm"};
 
 class File {
     public:

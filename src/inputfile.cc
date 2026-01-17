@@ -116,19 +116,20 @@ EntryInfo* GetInf(std::string File) {
         std::vector<std::string> l = split(Line);
         switch (_str2int(ReadMode)) {
             case _str2int("File"):
-                if (Line.starts_with("#")) continue;
+                if (Line.empty() || Line.starts_with("#")) continue;
+                if (l.empty()) continue;
                 // Check if the "file" is a directory
-                if (std::filesystem::is_directory(l[0])) {
-                    for (const auto& path : std::filesystem::directory_iterator(l[0])) {
-                        if (l.back() != l.front()) {
-                            if ((std::string){path.path().filename()}.ends_with(l[1]))
+                if (std::filesystem::is_directory(l.at(0))) {
+                    for (const auto& path : std::filesystem::directory_iterator(l.at(0))) {
+                        if (l.size() >= 1 && l.back() != l.front()) {
+                            if ((std::string){path.path().filename()}.ends_with(l.at(1)))
                                 Inf->Files.push_back(path.path());
                         } else
                             Inf->Files.push_back(path.path());
                         //std::println("{}", (std::string){path.path()});
                     }
                 } else
-                    Inf->Files.push_back(l[0]);
+                    Inf->Files.push_back(l.at(0));
                 break;
             case _str2int("Largs"):
                 if (Line.starts_with("#")) continue;
@@ -139,7 +140,7 @@ EntryInfo* GetInf(std::string File) {
                     std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                     Finish(1);
                 }
-                Inf->CompileArgs.push_back(std::make_tuple(l[0], l[1])); break;
+                Inf->CompileArgs.push_back(std::make_tuple(l.at(0), l.at(1))); break;
             case _str2int("Out"):
                 if (Line.starts_with("#")) continue;
                 Inf->BuildDirectory = Line; break;
@@ -152,10 +153,10 @@ EntryInfo* GetInf(std::string File) {
                     std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\", Line {}", REDB, RESET, Line, _Index); // FIX
                     Finish(1);
                 }
-                Inf->CompileArgs.push_back(std::make_tuple("-I " + l[0], l[1])); break;
+                Inf->CompileArgs.push_back(std::make_tuple("-I " + l.at(0), l.at(1))); break;
             case _str2int("Info"):
                 if (Line.starts_with("#")) continue;
-                switch (_str2int(l[0])) {
+                switch (_str2int(l.at(0))) {
                     case _str2int("UseCcache"):
                         Inf->Ccache = true; break;
                     case _str2int("AddClean"):
@@ -165,23 +166,25 @@ EntryInfo* GetInf(std::string File) {
                             std::println("{}ERR{}: Set the Output file name, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                             Finish(1);
                         }
-                        Inf->OutputFile = l[1]; break;
+                        Inf->OutputFile = l.at(1); break;
                     case _str2int("Linker"):
                         if (l.back() == l.front()) {
                             std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                             Finish(1);
                         }
-                        Inf->Linker = l[1]; break;
+                        Inf->Linker = l.at(1); break;
                     default:
-                        std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l[0]);
+                        std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l.at(0));
                         Finish(1);
                         break;
                 } break;
             case _str2int("Compilersfilters"):
-                if (Line.starts_with("#")) continue;
-                // l[0] = Extension
-                // l[1] = Compiler
-                Inf->CompilerFilter.push_back(std::make_tuple(l[0], l[1])); break;
+                if (Line.empty() || Line.starts_with("#")) continue;
+                if (l.empty()) continue;
+                // l.at(0) = Extension
+                // l.at(1) = Compiler
+                if (!l.empty()) Inf->CompilerFilter.push_back(std::make_tuple(l.at(0), l.at(1)));
+                break;
             case _str2int("Run"):
                 if (Line.starts_with("#")) continue;
                 Inf->Run.push_back(Line); break;
