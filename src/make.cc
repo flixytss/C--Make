@@ -44,6 +44,7 @@ typedef struct Function {
     std::string FunctionName = "";
     File InsideFile;
     std::vector<std::string> Utils;
+    std::vector<std::string> Dependson;
 } Function;
 std::vector<Function> Functions;
 
@@ -79,18 +80,23 @@ std::string SetCompiler(std::vector<enum Compilers> CompilersInUse, enum Compile
     }
     return ActualCompiler;
 }
+const std::string tolowercase(const std::string str) {
+    for (int i = 0; i < str.size(); i++) if (str[i]>=0x41&&str[i]<=0x5A) *((char*)&str[i])+=32;
+    return str;
+}
 void MakeFile(EntryInfo* inf) {
     if (!inf) {
         std::println("{}ERR{}: Entry Information not defined", REDB, RESET);
         Finish(1);
     }
-
     const std::string file = inf->OutputFile.empty() ? "Makefile" : inf->OutputFile;
+
     std::vector<std::string> Outs;
+    std::vector<std::string> OutsForParallel;
 
     if (inf->CleanUpFirst) {
         File clean {"", "", ""};
-        clean.command = inf->CleanUpFirst ? "echo \"[INFO] Cleaning...\"\n\t-@rm " + inf->BuildDirectory + "/*" : "";
+        clean.command = inf->CleanUpFirst ? "@echo \"[INFO] Cleaning...\"\n\t-@rm " + inf->BuildDirectory + "/*" : "";
 
         Function cleanrun {"clean", clean};
 
@@ -98,7 +104,7 @@ void MakeFile(EntryInfo* inf) {
     }
 
     File run {"", "", ""}; // For the Run command
-    run.command = inf->Run.size() ? ("echo \"[INFO] Running commands...\"\n") : "";
+    run.command = inf->Run.size() ? ("@echo \"[INFO] Running commands...\"\n") : "";
 
     Function funcrun {"run", run};
 
@@ -162,7 +168,9 @@ void MakeFile(EntryInfo* inf) {
         }
         
         Outs.push_back((std::string){path.filename()} + ".o");
+        OutsForParallel.push_back((std::string){path} + ".o");
         Function func {file + ".o", _file};
+        func.Dependson.push_back((std::string){path});
         func.Utils.push_back(std::format("@echo \"[{} Compiling file {} {:.1f}%...{}]\"", GREENB, _file.path, ((float)Index / (inf->Files.size())) * 100, RESET)); // MODIFY
         Functions.push_back(func);
 
@@ -185,9 +193,10 @@ void MakeFile(EntryInfo* inf) {
 
     Function func {"Link", f};
     func.Utils.push_back(std::format("@echo \"[{} Linking 100%...{}]\"\n", GREENB,  RESET));
-    Functions.push_back(func);
 
-    WriteFile(file, "# Generated Makefile, Just a template. You can modify me\n\n"); // Init Makefile
+    WriteFile(file, (std::string){"# Generated Makefile, Just a template. You can modify me\n"} + (inf->Cores ? "" : "\n")); // Init Makefile
+    if (inf->Cores > 0)
+        AppendFile(file, "# Why did you enable the cores, You just can do \"make -j(Cores)\" \n\n");
 
     int JustAConuter = 0;
     for (const enum Compilers& Com : CompilersInUse) {
@@ -196,8 +205,26 @@ void MakeFile(EntryInfo* inf) {
     }
     AppendFile(file, "\n");
 
+    // Makefile with Coressss
+    if (inf->Cores > 0) {
+        const bool EnableCores = tolowercase(inf->OutputFile) == "makefile";
+
+        AppendFile(file, ".DEFAULT_GOAL := parallel");
+        AppendFile(file, (std::string){"\nparallel:\n\t${MAKE} "} + (EnableCores ? "" : std::format("-f {} ", inf->OutputFile)) + "-j" + std::to_string(inf->Cores)  + " all\n\tfalse\n"); // Call itselfs with the wanted cores
+        func.Utils.push_back(std::format("@echo \"[{} Parallel build exited correctly, If the makefile says error. Just ignore it...{}]\"\n", GREENB,  RESET));
+    } else
+        AppendFile(file, ".DEFAULT_GOAL := all\n");
+    for (const std::string& dep : OutsForParallel)
+        func.Dependson.push_back(dep);
+    Functions.push_back(func);
+
     for (const Function& func : Functions) {
-        AppendFile(file, func.FunctionName + ":\n");
+        AppendFile(file, func.FunctionName + (func.Dependson.empty() ? ":\n" : ":"));
+        if (!func.Dependson.empty()) {
+            for (const std::string& dep : func.Dependson)
+                AppendFile(file, ' ' + dep);
+            AppendFile(file, "\n");
+        }
         AppendFile(file, '\t' + func.InsideFile.command + '\n');
         for (const std::string& util : func.Utils)
             AppendFile(file, '\t' + util + '\n');

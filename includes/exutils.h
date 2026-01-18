@@ -33,4 +33,5 @@ typedef struct EntryInfo {
     std::string OutputFile = "";
     std::string Linker = "";
     bool CleanUpFirst = false;
+    int Cores = 0;
 } EntryInfo;

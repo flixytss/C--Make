@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -6,6 +7,7 @@
 #include <sstream>
 #include <string>
 #include <print>
+#include <thread>
 #include <tuple>
 #include <vector>
 #include <exutils.h>
@@ -173,16 +175,23 @@ EntryInfo* GetInf(std::string File) {
                             Finish(1);
                         }
                         Inf->Linker = l.at(1); break;
+                    case _str2int("Cores"):
+                        if (l.back() == l.front()) {
+                            std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            Finish(1);
+                        }
+                        if (l.back() == "All") {
+                            Inf->Cores = std::thread::hardware_concurrency(); break;
+                        }
+
+                        Inf->Cores = atoi(l.back().c_str()); break;
                     default:
                         std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l.at(0));
                         Finish(1);
-                        break;
                 } break;
             case _str2int("Compilersfilters"):
                 if (Line.empty() || Line.starts_with("#")) continue;
                 if (l.empty()) continue;
-                // l.at(0) = Extension
-                // l.at(1) = Compiler
                 if (!l.empty()) Inf->CompilerFilter.push_back(std::make_tuple(l.at(0), l.at(1)));
                 break;
             case _str2int("Run"):

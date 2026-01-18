@@ -1,31 +1,34 @@
 # Generated Makefile, Just a template. You can modify me
+# Why did you enable the cores, You just can do "make -j(Cores)" 
 
 Var0 = clang++
 
+.DEFAULT_GOAL := parallel
+parallel:
+	${MAKE} -f PreviewMakefile -j8 all
+	false
 clean:
-	echo "[INFO] Cleaning..."
+	@echo "[INFO] Cleaning..."
 	-@rm home/*
 run:
-	echo "[INFO] Running commands..."
-
 	
-	
-	
-src/main.cc.o:
+src/main.cc.o: src/main.cc
 	ccache ${Var0} -c src/main.cc -o home/main.cc.o --std=gnu++23 -I includes 
 	@echo "[[1;32m Compiling file src/main.cc 0.0%...[0m]"
-src/files.cc.o:
+src/files.cc.o: src/files.cc
 	ccache ${Var0} -c src/files.cc -o home/files.cc.o --std=gnu++23 -I includes 
 	@echo "[[1;32m Compiling file src/files.cc 25.0%...[0m]"
-src/make.cc.o:
+src/make.cc.o: src/make.cc
 	ccache ${Var0} -c src/make.cc -o home/make.cc.o --std=gnu++23 -I includes 
 	@echo "[[1;32m Compiling file src/make.cc 50.0%...[0m]"
-src/inputfile.cc.o:
+src/inputfile.cc.o: src/inputfile.cc
 	ccache ${Var0} -c src/inputfile.cc -o home/inputfile.cc.o --std=gnu++23 -I includes 
 	@echo "[[1;32m Compiling file src/inputfile.cc 75.0%...[0m]"
-Link:
+Link: src/main.cc.o src/files.cc.o src/make.cc.o src/inputfile.cc.o
 	clang++ home/main.cc.o home/files.cc.o home/make.cc.o home/inputfile.cc.o -o home/C++Make
 	@echo "[[1;32m Linking 100%...[0m]"
+
+	@echo "[[1;32m Parallel build exited correctly, If the makefile says error. Just ignore it...[0m]"
 
 all:	clean	run	src/main.cc.o	src/files.cc.o	src/make.cc.o	src/inputfile.cc.o	Link
 install:

@@ -62,6 +62,7 @@ int main(int argc, char** argv) {
                     std::ofstream mainfile ("src/main.cc"); // file
 
                     WriteFile("create.conf", "#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
+                    break;
                 }
                 if ( std::filesystem::exists("mac.conf") && os == "mac" ) {
                     MakeFile(GetInf("mac.conf")); break;

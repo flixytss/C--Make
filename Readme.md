@@ -189,6 +189,7 @@ UseCcache
 - AddClean - This will add a "clean" function
 - Linker - This is for add a personalized linker
 - OutputFile - Change the output filename
+- Cores - To set parallel build, And set the build cores (Very useless)
 
 #### Run
 ``` bash
@@ -251,7 +252,7 @@ UseCcache
 ```
 Just to put a compiler to every file extension you are using
 
-#### Executable Arguments
+### Executable Arguments
 
 `$ C++Make make template` Will create a template with the following things:
 - src - Directory: Sources
@@ -261,12 +262,12 @@ Just to put a compiler to every file extension you are using
 
 `$ C++Make help` Just the help command (Just says something stupid...)  
 
-##### Inside making
+#### Command Inside making
 
 This is if you don't want to create a create.conf, Vut it is very simple. It can't let you modify almost nothing (Just let you add files, a output directory and set arguments)
 
-`$ C++Make --build <<Here the argument>>` It will set the output directory
-`$ C++Make --build <<Here the argument>> --arg <<Here the argument>>` It will set a link argument
+`$ C++Make --build <<Here the argument>>` It will set the output directory  
+`$ C++Make --build <<Here the argument>> --arg <<Here the argument>>` It will set a link argument  
 `$ C++Make --build <<Here the argument>> --arg <<Here the argument>> <<File>> <<File>>` If you add an uknown argument, it will interpret it like a file
 
 ### Extra Info
