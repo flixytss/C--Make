@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <format>
 #include <print>
 #include <exutils.h>
@@ -96,7 +95,7 @@ void MakeFile(EntryInfo* inf) {
 
     if (inf->CleanUpFirst) {
         File clean {"", "", ""};
-        clean.command = inf->CleanUpFirst ? "@echo \"[INFO] Cleaning...\"\n\t-@rm " + inf->BuildDirectory + "/*" : "";
+        clean.command = inf->CleanUpFirst ? "@echo \"[INFO] Cleaning...\"\n\t-@rm " + (inf->BuildDirectory.empty() ? "*.o" : (inf->BuildDirectory + "/*.o")) : "";
 
         Function cleanrun {"clean", clean};
 
@@ -109,7 +108,7 @@ void MakeFile(EntryInfo* inf) {
     Function funcrun {"run", run};
 
     for (const std::string& _run : inf->Run)
-        if (!_run.empty()) funcrun.Utils.push_back(_run);
+        funcrun.Utils.push_back(_run);
 
     Functions.push_back(funcrun);
 
@@ -196,7 +195,7 @@ void MakeFile(EntryInfo* inf) {
 
     WriteFile(file, (std::string){"# Generated Makefile, Just a template. You can modify me\n"} + (inf->Cores ? "" : "\n")); // Init Makefile
     if (inf->Cores > 0)
-        AppendFile(file, "# Why did you enable the cores, You just can do \"make -j(Cores)\" \n\n");
+        AppendFile(file, "# Why did you enable the cores?, I mean, You just can do \"make -j(Cores)\" \n\n");
 
     int JustAConuter = 0;
     for (const enum Compilers& Com : CompilersInUse) {

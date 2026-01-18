@@ -1,15 +1,11 @@
 # Generated Makefile, Just a template. You can modify me
-# Why did you enable the cores, You just can do "make -j(Cores)" 
 
 Var0 = clang++
 
-.DEFAULT_GOAL := parallel
-parallel:
-	${MAKE} -f PreviewMakefile -j8 all
-	false
+.DEFAULT_GOAL := all
 clean:
 	@echo "[INFO] Cleaning..."
-	-@rm home/*
+	-@rm home/*.o
 run:
 	
 src/main.cc.o: src/main.cc
@@ -27,8 +23,6 @@ src/inputfile.cc.o: src/inputfile.cc
 Link: src/main.cc.o src/files.cc.o src/make.cc.o src/inputfile.cc.o
 	clang++ home/main.cc.o home/files.cc.o home/make.cc.o home/inputfile.cc.o -o home/C++Make
 	@echo "[[1;32m Linking 100%...[0m]"
-
-	@echo "[[1;32m Parallel build exited correctly, If the makefile says error. Just ignore it...[0m]"
 
 all:	clean	run	src/main.cc.o	src/files.cc.o	src/make.cc.o	src/inputfile.cc.o	Link
 install:

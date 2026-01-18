@@ -119,7 +119,6 @@ EntryInfo* GetInf(std::string File) {
         switch (_str2int(ReadMode)) {
             case _str2int("File"):
                 if (Line.empty() || Line.starts_with("#")) continue;
-                if (l.empty()) continue;
                 // Check if the "file" is a directory
                 if (std::filesystem::is_directory(l.at(0))) {
                     for (const auto& path : std::filesystem::directory_iterator(l.at(0))) {
@@ -134,30 +133,30 @@ EntryInfo* GetInf(std::string File) {
                     Inf->Files.push_back(l.at(0));
                 break;
             case _str2int("Largs"):
-                if (Line.starts_with("#")) continue;
+                if (Line.empty() || Line.starts_with("#")) continue;
                 Inf->LinkArgs.push_back(Line); break;
             case _str2int("Cargs"):
-                if (Line.starts_with("#")) continue;
+                if (Line.empty() || Line.starts_with("#")) continue;
                 if (l.back() == l.front()) {
                     std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                     Finish(1);
                 }
                 Inf->CompileArgs.push_back(std::make_tuple(l.at(0), l.at(1))); break;
             case _str2int("Out"):
-                if (Line.starts_with("#")) continue;
+                if (Line.empty() || Line.starts_with("#")) continue;
                 Inf->BuildDirectory = Line; break;
             case _str2int("Project"):
-                if (Line.starts_with("#")) continue;
+                if (Line.empty() || Line.starts_with("#")) continue;
                 Inf->ProjectName = Line; break;
             case _str2int("Include"):
-                if (Line.starts_with("#")) continue;
+                if (Line.empty() || Line.starts_with("#")) continue;
                 if (l.back() == l.front()) {
-                    std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\", Line {}", REDB, RESET, Line, _Index); // FIX
+                    std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\", Line {}", REDB, RESET, Line, _Index);
                     Finish(1);
                 }
                 Inf->CompileArgs.push_back(std::make_tuple("-I " + l.at(0), l.at(1))); break;
             case _str2int("Info"):
-                if (Line.starts_with("#")) continue;
+                if (Line.empty() || Line.starts_with("#")) continue;
                 switch (_str2int(l.at(0))) {
                     case _str2int("UseCcache"):
                         Inf->Ccache = true; break;
@@ -195,7 +194,7 @@ EntryInfo* GetInf(std::string File) {
                 if (!l.empty()) Inf->CompilerFilter.push_back(std::make_tuple(l.at(0), l.at(1)));
                 break;
             case _str2int("Run"):
-                if (Line.starts_with("#")) continue;
+                if (Line.empty() || Line.starts_with("#")) continue;
                 Inf->Run.push_back(Line); break;
             default: break;
         }
