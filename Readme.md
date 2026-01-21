@@ -190,6 +190,7 @@ UseCcache
 - Linker - This is for add a personalized linker
 - OutputFile - Change the output filename
 - Cores - To set parallel build, And set the build cores (Very useless)
+- Use - To copy an OS section, You can modify it without modifying the selected OS section
 
 #### Run
 ``` bash
@@ -251,6 +252,49 @@ UseCcache
 # etc...
 ```
 Just to put a compiler to every file extension you are using
+
+#### OSs Section
+
+Here you can add a specific operative system config, These are the avaible operative systems:
+- Linux
+- Windows
+- Mac
+
+**For example**:
+``` bash
+#: Windows
+#: File
+src/main.cc
+src/main2.cc
+src .cc
+#: Link args
+-lcurl
+-lm
+-lraylib
+# Things like that
+#: Compiling args
+--std=c++23 clang++
+#: Out
+home
+#: Project
+C++Make
+#: Include
+includes All
+home/etc All
+#: Info
+UseCcache
+#: Run
+@fastfetch
+#: Compilers filters
+.c clang
+.cc cc
+.s nasm
+.rust rustc
+
+#: Linux
+```
+In the first section called "Windows" Made config in front of it part of windows, You can add more OSs sections Like Mac and Linux  
+**Depending on the os name, the config will be used by the specific os**. If there isn't a config for you os, you will get the last config
 
 ### Executable Arguments
 
