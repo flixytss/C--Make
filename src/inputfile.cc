@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cstdlib>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -76,10 +75,9 @@ struct DifferentsOsEntryInfo {
     EntryInfo OnlyWindows {};
     EntryInfo OnlyLinux {};
     EntryInfo OnlyMac {};
-    bool Havetofree = false;
 };
 
-std::tuple<EntryInfo*, bool> GetInf(std::string File) {
+EntryInfo* GetInf(std::string File) {
     std::vector<std::string> Buffer = GetLines(File);
 
     std::string ReadMode = "File";
@@ -216,17 +214,11 @@ std::tuple<EntryInfo*, bool> GetInf(std::string File) {
                         }
                         switch (_str2int(l.at(1))) {
                             case _str2int("Linux"):
-                                Inf = new EntryInfo { OsEntryInfo.OnlyLinux };
-                                OsEntryInfo.Havetofree = true;
-                                break;
+                                *Inf = { OsEntryInfo.OnlyLinux }; break;
                             case _str2int("Windows"):
-                                Inf = new EntryInfo { OsEntryInfo.OnlyWindows };
-                                OsEntryInfo.Havetofree = true;
-                                break;
+                                *Inf = { OsEntryInfo.OnlyWindows }; break;
                             case _str2int("Mac"):
-                                Inf = new EntryInfo { OsEntryInfo.OnlyMac };
-                                OsEntryInfo.Havetofree = true;
-                                break;
+                                *Inf = { OsEntryInfo.OnlyMac }; break;
                             default: break;
                         }
                         
@@ -239,7 +231,6 @@ std::tuple<EntryInfo*, bool> GetInf(std::string File) {
                         if (l.back() == "All") {
                             Inf->Cores = std::thread::hardware_concurrency(); break;
                         }
-
                         Inf->Cores = atoi(l.back().c_str()); break;
                     default:
                         std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l.at(0));
@@ -258,6 +249,16 @@ std::tuple<EntryInfo*, bool> GetInf(std::string File) {
 
         _Index++;
     }
+    #ifdef __linux
+        Inf = &OsEntryInfo.OnlyLinux;
+    #endif
+    #ifdef __WIN32
+        Inf = &OsEntryInfo.OnlyWindows;
+    #endif
+    #ifdef __APPLE__
+        Inf = &OsEntryInfo.OnlyMac;
+    #endif
+    
 
-    return std::make_tuple(Inf, OsEntryInfo.Havetofree);
+    return Inf;
 }

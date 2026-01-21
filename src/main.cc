@@ -9,8 +9,8 @@
 
 EntryInfo inf;
 
-extern void MakeFile(std::tuple<EntryInfo*, bool>);
-extern std::tuple<EntryInfo*, bool> GetInf(std::string File);
+extern void MakeFile(EntryInfo*);
+extern EntryInfo* GetInf(std::string File);
 
 constexpr int str2int(std::string str) {
     uint num = 0;
@@ -20,7 +20,7 @@ constexpr int str2int(std::string str) {
 int main(int argc, char** argv) {
     if (argc < 1)
         Finish(0);
-    std::tuple<EntryInfo*, bool> Inf;
+    EntryInfo* Inf;
     bool free;
 
     for (int Index = 0; Index < argc; Index++) {
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
                     Finish(0);
                 }
                 Inf = GetInf(argv[Index + 1] ? argv[Index + 1] : "create.conf");
-                if (!std::get<0>(Inf)->Files.size()) {
+                if (!Inf->Files.size()) {
                     std::println("{}ERR{}: Why would i make a Makefile with no files to compile?", REDB, RESET);
                     Finish(1);
                 }

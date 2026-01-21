@@ -11,7 +11,7 @@
 
 namespace fs = std::filesystem;
 
-std::vector<std::string> Compilers = {"clang++", "cc", "clang", "nasm"};
+std::vector<std::string> Compilers = {"clang++", "cc", "clang", "nasm", "go"};
 
 class File {
     public:
@@ -29,14 +29,14 @@ class File {
 
             if (this->out.starts_with('/'))
                 this->out.erase(this->out.begin() + 0);
-            this->command = (std::string) {this->compiler + " -c " + this->path + " -o " + this->out + ' '}; // Set more compilers syntax
-            for (std::string a : this->args) this->command += a + " ";
+            this->command = (std::string) {this->compiler + " -c " + this->path + " -o " + this->out}; // Set more compilers syntax
+            for (std::string a : this->args) this->command += " " + a;
         }
         void Recalculate() {
             if (this->out.starts_with('/'))
-                this->out.erase(this->out.begin() + 0);
-            this->command = (std::string) {this->compiler + " -c " + this->path + " -o " + this->out + ' '}; // Set more compilers syntax
-            for (std::string a : this->args) this->command += a + " ";
+                this->out.erase(this->out.begin());
+            this->command = (std::string) {this->compiler + " -c " + this->path + " -o " + this->out + ' '};
+            for (std::string a : this->args) this->command += " " + a;
         }
 };
 typedef struct Function {
@@ -80,13 +80,10 @@ std::string SetCompiler(std::vector<enum Compilers> CompilersInUse, enum Compile
     return ActualCompiler;
 }
 const std::string tolowercase(const std::string str) {
-    for (int i = 0; i < str.size(); i++) if (str[i]>=0x41&&str[i]<=0x5A) *((char*)&str[i])+=32;
+    for (int i = 0; i < str.size(); i++) if (str[i]>=0x41&&str[i]<=0x5A) *(char*)&str[i]+=32;
     return str;
 }
-void MakeFile(std::tuple<EntryInfo*, bool> data) {
-    const EntryInfo* inf = std::get<0>(data);
-    const bool HaveToFreeMemory = std::get<1>(data);
-
+void MakeFile(EntryInfo* inf) {
     if (!inf) {
         std::println("{}ERR{}: Entry Information not defined", REDB, RESET);
         Finish(1);
@@ -138,7 +135,6 @@ void MakeFile(std::tuple<EntryInfo*, bool> data) {
 
         File _file {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + "clang++"};
 
-        int JustAConuter = 0;
         for (const auto& tuple : inf->CompilerFilter) {
             if ((std::string){path.filename()}.ends_with(std::get<0>(tuple))) {
                 _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + std::get<1>(tuple)}; break;
@@ -182,7 +178,7 @@ void MakeFile(std::tuple<EntryInfo*, bool> data) {
     File f {"", "", ""}; // For the link command
     
     if (inf->Compiler.empty())
-        f.command = (inf->Linker.empty() ? Compilers[CompilersInUse[0]] : inf->Linker) + " ";
+        f.command = (inf->Linker.empty() ? Compilers[CompilersInUse[0]] : inf->Linker) + " tool link ";
     else
         f.command = (inf->Linker.empty() ? inf->Compiler : inf->Linker) + " ";
     for (const std::string& out : Outs)
@@ -243,7 +239,4 @@ void MakeFile(std::tuple<EntryInfo*, bool> data) {
     //
     const std::string install = std::format("install:\n\tsudo mv {} /usr/bin", AppPath);
     AppendFile(file, install);
-
-    if (HaveToFreeMemory)
-        delete inf;
 }
