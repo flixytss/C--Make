@@ -290,7 +290,6 @@ UseCcache
 .cc cc
 .s nasm
 .rust rustc
-
 #: Linux
 ```
 In the first section called "Windows" Made config in front of it part of windows, You can add more OSs sections Like Mac and Linux  
@@ -306,9 +305,9 @@ In the first section called "Windows" Made config in front of it part of windows
 
 `$ C++Make help` Just the help command (Just says something stupid...)  
 
-#### Command Inside making
+#### Creating from the command line
 
-This is if you don't want to create a create.conf, Vut it is very simple. It can't let you modify almost nothing (Just let you add files, a output directory and set arguments)
+This is if you don't want to create a create.conf, But it is very simple. It can't let you modify almost nothing (Just let you add files, a output directory and set arguments)
 
 `$ C++Make --build <<Here the argument>>` It will set the output directory  
 `$ C++Make --build <<Here the argument>> --arg <<Here the argument>>` It will set a link argument  
@@ -318,9 +317,6 @@ This is if you don't want to create a create.conf, Vut it is very simple. It can
 
 - The **code flow does not matter**.  
 - To make a comment, Use '#' in a newline.  
-- And report for any *bug*
-
-You can rename your config file to:
-- win.conf - C++Make will use that file for windows
-- linux.conf - C++Make will use that file for linux
-- mac.conf - C++Make will use that file for macos
+- And report for any *bug*  
+  
+The `C++MakeSignature!` at the start of the code are the magic bytes, is it used for identifying a C++Make file without knowing the file name

@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
                             existingfilewithsignature = path.path();
                     }
                     if (existingfilewithsignature.empty()) {
-                        WriteFile("create.conf", "#: File\n#: Link args\n#: Compiling args\n#: Out\n#: Project\n#: Include\n#: Info\nUseCcache\n#: Run\n#: Compilers filters");
+                        WriteFile("create.conf", "C++MakeSignature!\n#: File\n#: Link args\n#: Compiling args\n#: Out\n#: Project\n#: Include\n#: Info\nUseCcache\n#: Run\n#: Compilers filters");
                         Finish(0);
                     }
                 }
