@@ -80,7 +80,7 @@ struct DifferentsOsEntryInfo {
 EntryInfo* GetInf(std::string File) {
     std::vector<std::string> Buffer = GetLines(File);
 
-    std::string ReadMode = "File";
+    std::string ReadMode = "TextMode";
     EntryInfo* Inf;
     bool osModeEnabled = false;
     static DifferentsOsEntryInfo OsEntryInfo {};

@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     if (argc < 1)
         Finish(0);
     EntryInfo* Inf;
-    bool free;
+    std::string existingfilewithsignature = "";
 
     for (int Index = 0; Index < argc; Index++) {
         const std::string Arg = argv[Index];
@@ -55,11 +55,18 @@ int main(int argc, char** argv) {
                     WriteFile("create.conf", "#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
                     break;
                 }
+
                 if ( !std::filesystem::exists("create.conf") ) {
-                    WriteFile("create.conf", "#: File\n#: Link args\n#: Compiling args\n#: Out\n#: Project\n#: Include\n#: Info\nUseCcache\n#: Run\n#: Compilers filters");
-                    Finish(0);
+                    for (const auto& path : std::filesystem::directory_iterator(std::filesystem::current_path())) {
+                        if (ReadFile(path.path()).starts_with("C++MakeSignature!"))
+                            existingfilewithsignature = path.path();
+                    }
+                    if (existingfilewithsignature.empty()) {
+                        WriteFile("create.conf", "#: File\n#: Link args\n#: Compiling args\n#: Out\n#: Project\n#: Include\n#: Info\nUseCcache\n#: Run\n#: Compilers filters");
+                        Finish(0);
+                    }
                 }
-                Inf = GetInf(argv[Index + 1] ? argv[Index + 1] : "create.conf");
+                Inf = GetInf(existingfilewithsignature.empty() ? (argv[Index + 1] ? argv[Index + 1] : "create.conf") : existingfilewithsignature);
                 if (!Inf->Files.size()) {
                     std::println("{}ERR{}: Why would i make a Makefile with no files to compile?", REDB, RESET);
                     Finish(1);

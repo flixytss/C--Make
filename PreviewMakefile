@@ -18,7 +18,7 @@ src/inputfile.cc.o: src/inputfile.cc
 	ccache ${Var0} -c src/inputfile.cc -o inputfile.cc.o
 	@echo "[[[1;32m Compiling file src/inputfile.cc 75.0%...[0m]]"
 Link: src/main.cc.o src/files.cc.o src/make.cc.o src/inputfile.cc.o
-	cc tool link main.cc.o files.cc.o make.cc.o inputfile.cc.o -o a.out
+	cc main.cc.o files.cc.o make.cc.o inputfile.cc.o -o a.out
 	@echo "[[[1;32m Linking 100%...[0m]]"
 
 all:	run	src/main.cc.o	src/files.cc.o	src/make.cc.o	src/inputfile.cc.o	Link

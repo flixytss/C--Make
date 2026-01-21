@@ -178,7 +178,7 @@ void MakeFile(EntryInfo* inf) {
     File f {"", "", ""}; // For the link command
     
     if (inf->Compiler.empty())
-        f.command = (inf->Linker.empty() ? Compilers[CompilersInUse[0]] : inf->Linker) + " tool link ";
+        f.command = (inf->Linker.empty() ? Compilers[CompilersInUse[0]] : inf->Linker) + " ";
     else
         f.command = (inf->Linker.empty() ? inf->Compiler : inf->Linker) + " ";
     for (const std::string& out : Outs)
