@@ -70,13 +70,22 @@ constexpr int _str2int(std::string str) {
     return num;
 }
 
-const std::string CommandsForSyntaxisFallback[8] = {"File", "Link args", "Out", "Project", "Include", "Info", "Run", "Compilers filters"};
+const std::string CommandsForSyntaxisFallback[11] = {"File", "Link args", "Out", "Project", "Include", "Info", "Run", "Compilers filters", "Windows", "Mac", "Linux"};
 
-EntryInfo* GetInf(std::string File) {
+struct DifferentsOsEntryInfo {
+    EntryInfo OnlyWindows {};
+    EntryInfo OnlyLinux {};
+    EntryInfo OnlyMac {};
+    bool Havetofree = false;
+};
+
+std::tuple<EntryInfo*, bool> GetInf(std::string File) {
     std::vector<std::string> Buffer = GetLines(File);
 
     std::string ReadMode = "File";
-    EntryInfo* Inf = new EntryInfo();
+    EntryInfo* Inf;
+    bool osModeEnabled = false;
+    static DifferentsOsEntryInfo OsEntryInfo {};
 
     int _Index = 0;
     for (const std::string& Line : Buffer) {
@@ -101,10 +110,21 @@ EntryInfo* GetInf(std::string File) {
                     ReadMode = "Run"; break;
                 case _str2int("Compilers filters"):
                     ReadMode = "Compilersfilters"; break;
+                case _str2int("Use Os"):
+                    ReadMode = "CopyPreviusOs"; break;
+                case _str2int("Windows"):
+                    osModeEnabled = true;
+                    ReadMode = "Windows"; break;
+                case _str2int("Linux"):
+                    osModeEnabled = true;
+                    ReadMode = "Linux"; break;
+                case _str2int("Mac"):
+                    osModeEnabled = true;
+                    ReadMode = "Mac"; break;
                 default:
                     if (Line.starts_with("#")) {
-                        for (int index = 0; index < 8 /* MODIFY */; index++) { // Modify Every time a new command is created
-                            if (IsItVerySimilar(Parameter, CommandsForSyntaxisFallback[index], strlen(CommandsForSyntaxisFallback[index].c_str()) / 2)) {
+                        for (int index = 0; index < 11 /* MODIFY */; index++) { // Modify Every time a new command is created
+                            if (IsItVerySimilar(Parameter, CommandsForSyntaxisFallback[index], CommandsForSyntaxisFallback[index].size() / 2)) {
                                 std::println("{}ERR{}: Don't you mean {}?, Line: {}", REDB, RESET, CommandsForSyntaxisFallback[index], Line);
                                 Finish(1);
                             }
@@ -113,6 +133,21 @@ EntryInfo* GetInf(std::string File) {
                         Finish(1);
                     } break;
             }
+        }
+        if (osModeEnabled) {
+            if (ReadMode == "Windows") Inf = &OsEntryInfo.OnlyWindows;
+            if (ReadMode == "Linux") Inf = &OsEntryInfo.OnlyLinux;
+            if (ReadMode == "Mac") Inf = &OsEntryInfo.OnlyMac;
+        } else {
+            #ifdef __linux
+                Inf = &OsEntryInfo.OnlyLinux;
+            #endif
+            #ifdef _WIN32
+                Inf = &OsEntryInfo.OnlyWindows;
+            #endif
+            #ifdef __APPLE__
+                Inf = &OsEntryInfo.OnlyMac;
+            #endif
         }
 
         std::vector<std::string> l = split(Line);
@@ -174,6 +209,28 @@ EntryInfo* GetInf(std::string File) {
                             Finish(1);
                         }
                         Inf->Linker = l.at(1); break;
+                    case _str2int("Use"):
+                        if (l.back() == l.front()) {
+                            std::println("{}ERR{}: Set Os argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            Finish(1);
+                        }
+                        switch (_str2int(l.at(1))) {
+                            case _str2int("Linux"):
+                                Inf = new EntryInfo { OsEntryInfo.OnlyLinux };
+                                OsEntryInfo.Havetofree = true;
+                                break;
+                            case _str2int("Windows"):
+                                Inf = new EntryInfo { OsEntryInfo.OnlyWindows };
+                                OsEntryInfo.Havetofree = true;
+                                break;
+                            case _str2int("Mac"):
+                                Inf = new EntryInfo { OsEntryInfo.OnlyMac };
+                                OsEntryInfo.Havetofree = true;
+                                break;
+                            default: break;
+                        }
+                        
+                        break;
                     case _str2int("Cores"):
                         if (l.back() == l.front()) {
                             std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
@@ -202,5 +259,5 @@ EntryInfo* GetInf(std::string File) {
         _Index++;
     }
 
-    return Inf;
+    return std::make_tuple(Inf, OsEntryInfo.Havetofree);
 }

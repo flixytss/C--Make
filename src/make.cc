@@ -83,7 +83,10 @@ const std::string tolowercase(const std::string str) {
     for (int i = 0; i < str.size(); i++) if (str[i]>=0x41&&str[i]<=0x5A) *((char*)&str[i])+=32;
     return str;
 }
-void MakeFile(EntryInfo* inf) {
+void MakeFile(std::tuple<EntryInfo*, bool> data) {
+    const EntryInfo* inf = std::get<0>(data);
+    const bool HaveToFreeMemory = std::get<1>(data);
+
     if (!inf) {
         std::println("{}ERR{}: Entry Information not defined", REDB, RESET);
         Finish(1);
@@ -170,7 +173,7 @@ void MakeFile(EntryInfo* inf) {
         OutsForParallel.push_back((std::string){path} + ".o");
         Function func {file + ".o", _file};
         func.Dependson.push_back((std::string){path});
-        func.Utils.push_back(std::format("@echo \"[{} Compiling file {} {:.1f}%...{}]\"", GREENB, _file.path, ((float)Index / (inf->Files.size())) * 100, RESET)); // MODIFY
+        func.Utils.push_back(std::format("@echo \"[[\033[1;32m Compiling file {} {:.1f}%...\033[0m]]\"", _file.path, ((float)Index / (inf->Files.size())) * 100)); // MODIFY
         Functions.push_back(func);
 
         Index++;
@@ -191,7 +194,7 @@ void MakeFile(EntryInfo* inf) {
             f.command += ' ' + arg;
 
     Function func {"Link", f};
-    func.Utils.push_back(std::format("@echo \"[{} Linking 100%...{}]\"\n", GREENB,  RESET));
+    func.Utils.push_back("@echo \"[[\033[1;32m Linking 100%...\033[0m]]\"\n");
 
     WriteFile(file, (std::string){"# Generated Makefile, Just a template. You can modify me\n"} + (inf->Cores ? "" : "\n")); // Init Makefile
     if (inf->Cores > 0)
@@ -210,7 +213,7 @@ void MakeFile(EntryInfo* inf) {
 
         AppendFile(file, ".DEFAULT_GOAL := parallel");
         AppendFile(file, (std::string){"\nparallel:\n\t${MAKE} "} + (EnableCores ? "" : std::format("-f {} ", inf->OutputFile)) + "-j" + std::to_string(inf->Cores)  + " all\n\tfalse\n"); // Call itselfs with the wanted cores
-        func.Utils.push_back(std::format("@echo \"[{} Parallel build exited correctly, If the makefile says error. Just ignore it...{}]\"\n", GREENB,  RESET));
+        func.Utils.push_back("@echo \"[\033[1;32m Parallel build exited correctly, If the makefile says error. Just ignore it...\033[0m]\"\n");
     } else
         AppendFile(file, ".DEFAULT_GOAL := all\n");
     for (const std::string& dep : OutsForParallel)
@@ -240,4 +243,7 @@ void MakeFile(EntryInfo* inf) {
     //
     const std::string install = std::format("install:\n\tsudo mv {} /usr/bin", AppPath);
     AppendFile(file, install);
+
+    if (HaveToFreeMemory)
+        delete inf;
 }

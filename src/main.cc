@@ -5,11 +5,12 @@
 #include <print>
 #include <string>
 #include <exutils.h>
+#include <tuple>
 
 EntryInfo inf;
 
-extern void MakeFile(EntryInfo* inf);
-extern EntryInfo* GetInf(std::string File);
+extern void MakeFile(std::tuple<EntryInfo*, bool>);
+extern std::tuple<EntryInfo*, bool> GetInf(std::string File);
 
 constexpr int str2int(std::string str) {
     uint num = 0;
@@ -19,18 +20,8 @@ constexpr int str2int(std::string str) {
 int main(int argc, char** argv) {
     if (argc < 1)
         Finish(0);
-    EntryInfo* Inf;
-    std::string os = "N/A";
-
-    #ifdef __linux
-        os = "linux";
-    #endif
-    #ifdef _WIN32
-        os = "win";
-    #endif
-    #ifdef __APPLE__
-        os = "mac";
-    #endif
+    std::tuple<EntryInfo*, bool> Inf;
+    bool free;
 
     for (int Index = 0; Index < argc; Index++) {
         const std::string Arg = argv[Index];
@@ -64,21 +55,12 @@ int main(int argc, char** argv) {
                     WriteFile("create.conf", "#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
                     break;
                 }
-                if ( std::filesystem::exists("mac.conf") && os == "mac" ) {
-                    MakeFile(GetInf("mac.conf")); break;
-                }
-                if ( std::filesystem::exists("win.conf") && os == "win" ) {
-                    MakeFile(GetInf("win.conf")); break;
-                }
-                if ( std::filesystem::exists("linux.conf") && os == "linux" ) {
-                    MakeFile(GetInf("linux.conf")); break;
-                }
                 if ( !std::filesystem::exists("create.conf") ) {
                     WriteFile("create.conf", "#: File\n#: Link args\n#: Compiling args\n#: Out\n#: Project\n#: Include\n#: Info\nUseCcache\n#: Run\n#: Compilers filters");
                     Finish(0);
                 }
                 Inf = GetInf(argv[Index + 1] ? argv[Index + 1] : "create.conf");
-                if (!Inf->Files.size()) {
+                if (!std::get<0>(Inf)->Files.size()) {
                     std::println("{}ERR{}: Why would i make a Makefile with no files to compile?", REDB, RESET);
                     Finish(1);
                 }

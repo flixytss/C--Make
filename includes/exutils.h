@@ -34,4 +34,5 @@ typedef struct EntryInfo {
     std::string Linker = "";
     bool CleanUpFirst = false;
     int Cores = 0;
+    bool UsingDestructor = false;
 } EntryInfo;
