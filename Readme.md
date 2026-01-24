@@ -191,6 +191,7 @@ UseCcache
 - OutputFile - Change the output filename
 - Cores - To set parallel build, And set the build cores (Very useless)
 - Use - To copy an OS section, You can modify it without modifying the selected OS section
+- OnlyUseLinker - It will use the linker, It will not add compile functions. It will just link the files that you added
 
 #### Run
 ``` bash
