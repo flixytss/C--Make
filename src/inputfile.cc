@@ -77,7 +77,7 @@ struct DifferentsOsEntryInfo {
     EntryInfo OnlyMac {};
 };
 
-EntryInfo* GetInf(std::string File) {
+EntryInfo* GetInf(std::string File, bool verbose) {
     std::vector<std::string> Buffer = GetLines(File);
 
     std::string ReadMode = "TextMode";
@@ -108,8 +108,6 @@ EntryInfo* GetInf(std::string File) {
                     ReadMode = "Run"; break;
                 case _str2int("Compilers filters"):
                     ReadMode = "Compilersfilters"; break;
-                case _str2int("Use Os"):
-                    ReadMode = "CopyPreviusOs"; break;
                 case _str2int("Windows"):
                     osModeEnabled = true;
                     ReadMode = "Windows"; break;
@@ -229,9 +227,12 @@ EntryInfo* GetInf(std::string File) {
                             Finish(1);
                         }
                         if (l.back() == "All") {
+                            if (verbose) std::println("[DEBUG] Cores found: {}", std::thread::hardware_concurrency());
                             Inf->Cores = std::thread::hardware_concurrency(); break;
                         }
                         Inf->Cores = atoi(l.back().c_str()); break;
+                    case _str2int("OnlyUseLinker"):
+                        Inf->OnlyLinker = true; break;
                     default:
                         std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l.at(0));
                         Finish(1);

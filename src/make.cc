@@ -178,11 +178,18 @@ void MakeFile(EntryInfo* inf) {
     File f {"", "", ""}; // For the link command
     
     if (inf->Compiler.empty())
-        f.command = (inf->Linker.empty() ? Compilers[CompilersInUse[0]] : inf->Linker) + " ";
+        f.command = (inf->Linker.empty() ? Compilers[CompilersInUse[0]] : inf->Linker);
     else
         f.command = (inf->Linker.empty() ? inf->Compiler : inf->Linker) + " ";
-    for (const std::string& out : Outs)
-        f.command += inf->BuildDirectory + (inf->BuildDirectory.empty() ?  "" : "/") + out + " ";
+    if (!inf->OnlyLinker) {
+        f.command += ' ';
+        for (const std::string& out : Outs)
+            f.command += inf->BuildDirectory + (inf->BuildDirectory.empty() ?  "" : "/") + out + " ";
+    } else {
+        for (const std::string& out : inf->Files)
+            f.command += inf->BuildDirectory + ' ' + out;
+        f.command += ' ';
+    }
     const std::string AppPath = inf->BuildDirectory + (inf->BuildDirectory.empty() ? (inf->ProjectName.empty() ? "a.out" : inf->ProjectName) : (inf->ProjectName.empty() ? "/a.out" : "/" + inf->ProjectName));
     f.command += "-o " + AppPath;
     if (inf->LinkArgs.size() > 0)
@@ -214,7 +221,11 @@ void MakeFile(EntryInfo* inf) {
         AppendFile(file, ".DEFAULT_GOAL := all\n");
     for (const std::string& dep : OutsForParallel)
         func.Dependson.push_back(dep);
-    Functions.push_back(func);
+    if (inf->OnlyLinker) {
+        Functions.clear();
+        func.Dependson.clear();
+    }
+    if (inf->Files.size() || inf->OnlyLinker) Functions.push_back(func);
 
     for (const Function& func : Functions) {
         AppendFile(file, func.FunctionName + (func.Dependson.empty() ? ":\n" : ":"));
@@ -227,6 +238,7 @@ void MakeFile(EntryInfo* inf) {
         for (const std::string& util : func.Utils)
             AppendFile(file, '\t' + util + '\n');
     }
+
     //
     // "All" function
     //

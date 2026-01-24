@@ -5,8 +5,8 @@ C++Make is a Makefile Generator. Made it with C++, Here is a usage example
 
 ## Usage
 `$ C++Make make`
-It will create a file named create.conf that is the base of our Makefile generator
-`$ C++Make make`
+It will create a file named create.conf that is the base of our Makefile generator  
+`$ C++Make make c.conf` You can also add a file name, It will create the file if it dosen't exists
 Then it will use it for the generation
 ``` bash
 #: File
@@ -309,9 +309,15 @@ In the first section called "Windows" Made config in front of it part of windows
 
 This is if you don't want to create a create.conf, But it is very simple. It can't let you modify almost nothing (Just let you add files, a output directory and set arguments)
 
-`$ C++Make --build <<Here the argument>>` It will set the output directory  
-`$ C++Make --build <<Here the argument>> --arg <<Here the argument>>` It will set a link argument  
-`$ C++Make --build <<Here the argument>> --arg <<Here the argument>> <<File>> <<File>>` If you add an uknown argument, it will interpret it like a file
+`$ C++Make set-build <<Here the argument>>` It will set the output directory  
+`$ C++Make set-build <<Here the argument>> add-arg <<Here the argument>>` It will set a link argument  
+`$ C++Make set-build <<Here the argument>> add-arg <<Here the argument>> <<File>> <<File>>` If you add an uknown argument, it will interpret it like a file
+
+### Sync mode (NEW)
+
+Sync mode detect if the config file has changed, If it does, Then it will create a new makefile  
+`$ C++Make sync <<Config file>> &` It will sync with the config file, It will read it looking for changes to remake the makefile.
+**It has to be used as a background proccess with `&`**
 
 ### Extra Info
 

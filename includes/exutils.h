@@ -34,5 +34,8 @@ typedef struct EntryInfo {
     std::string Linker = "";
     bool CleanUpFirst = false;
     int Cores = 0;
-    bool UsingDestructor = false;
+    bool OnlyLinker = false;
 } EntryInfo;
+
+extern void MakeFile(EntryInfo*);
+extern EntryInfo* GetInf(std::string File, bool verbose = false);
