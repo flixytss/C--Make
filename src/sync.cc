@@ -20,9 +20,7 @@ bool DidTheFileChange(const std::string& file)
     return false;
 }
 void run(std::string file, EntryInfo* inf) {
-    std::println("[DEBUG] Running thread {}...", std::this_thread::get_id());
     MakeFile(inf);
-    std::println("[DEBUG] Stopping thread...");
 }
 void BackgroundProccess(std::string file) {
     while (true) {
