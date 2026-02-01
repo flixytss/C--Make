@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
                         cdirectory = argv[Index + 1];
                         std::println("Copying template into {}...", cdirectory);
                     }
-                    if ( std::filesystem::exists(cdirectory) ) std::filesystem::create_directories(cdirectory);
+                    if ( !std::filesystem::exists(cdirectory) ) std::filesystem::create_directories(cdirectory);
 
                     std::filesystem::create_directory(cdirectory + "/src"); // directories
                     std::filesystem::create_directory(cdirectory + "/build");
