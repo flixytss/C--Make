@@ -59,6 +59,7 @@ int main(int argc, char** argv) {
                         cdirectory = argv[Index + 1];
                         std::println("Copying template into {}...", cdirectory);
                     }
+                    if ( std::filesystem::exists(cdirectory) ) std::filesystem::create_directories(cdirectory);
 
                     std::filesystem::create_directory(cdirectory + "/src"); // directories
                     std::filesystem::create_directory(cdirectory + "/build");
@@ -66,8 +67,8 @@ int main(int argc, char** argv) {
 
                     WriteFile(cdirectory + "/src/main.cc", "#include <string>\n\nconstexpr long s2i(std::string b){ long l = 0; for (char c : b) l += c; return l; } // AUXILIAR\nint main(int argc, char** argv) { return 0; }");
                     WriteFile(cdirectory + "/compile_flags.txt", "-std=gnu++23\n-Iinclude");
-
                     WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
+
                     break;
                 }
 
