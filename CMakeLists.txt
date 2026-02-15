@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-project(C++Make
+project(c++make
     LANGUAGES CXX
     VERSION 2.0
     DESCRIPTION "A Makefile Generator, Just that..."
@@ -9,7 +9,6 @@ project(C++Make
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_UNITY_BUILD ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(SOURCES

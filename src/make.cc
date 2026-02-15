@@ -27,15 +27,12 @@ class File {
             this->compiler = _compiler;
             this->args = _args;
 
-            if (this->out.starts_with('/'))
-                this->out.erase(this->out.begin() + 0);
-            this->command = (std::string) {this->compiler + " -c " + this->path + " -o " + this->out}; // Set more compilers syntax
-            for (std::string a : this->args) this->command += " " + a;
+            this->Recalculate();
         }
         void Recalculate() {
             if (this->out.starts_with('/'))
                 this->out.erase(this->out.begin());
-            this->command = (std::string) {this->compiler + " -c " + this->path + " -o " + this->out + ' '};
+            this->command = (std::string) {this->compiler + " -c " + this->path + " -o " + this->out};
             for (std::string a : this->args) this->command += " " + a;
         }
 };
@@ -229,26 +226,22 @@ void MakeFile(EntryInfo* inf) {
 
     for (const Function& func : Functions) {
         AppendFile(file, func.FunctionName + (func.Dependson.empty() ? ":\n" : ":"));
+        for (const std::string& util : func.Utils)
+            AppendFile(file, '\t' + util + '\n');
         if (!func.Dependson.empty()) {
             for (const std::string& dep : func.Dependson)
                 AppendFile(file, ' ' + dep);
             AppendFile(file, "\n");
         }
         AppendFile(file, '\t' + func.InsideFile.command + '\n');
-        for (const std::string& util : func.Utils)
-            AppendFile(file, '\t' + util + '\n');
     }
 
-    //
     // "All" function
-    //
     std::string all = "all:";
     for (const Function& func : Functions) all += "\t" + func.FunctionName;
 
     AppendFile(file, all + '\n');
-    //
     // "Install" function
-    //
     const std::string install = std::format("install:\n\tsudo mv {} /usr/bin", AppPath);
     AppendFile(file, install);
 }

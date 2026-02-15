@@ -1,7 +1,7 @@
+#include <cstdlib>
 #include <files.h>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
 #include <print>
 #include <string>
 #include <exutils.h>
@@ -9,8 +9,8 @@
 EntryInfo inf;
 
 extern void BackgroundProccess(std::string file);
-
-// Complete Verbose Mode // TODOOOOO
+std::string home = getenv("HOME");
+std::string librariesdirectory = home + "/.local/state/c++make/libraries";
 
 constexpr int str2int(std::string str) {
     uint num = 0;
@@ -22,6 +22,8 @@ int main(int argc, char** argv) {
         Finish(0);
     EntryInfo* Inf;
     std::string existingfilewithsignature = "";
+
+    if ( !std::filesystem::exists(home + "/.local/state/c++make/libraries") ) std::filesystem::create_directories(home + "/.local/state/c++make/libraries");
 
     for (int Index = 0; Index < argc; Index++) {
         const std::string Arg = argv[Index];
@@ -50,6 +52,12 @@ int main(int argc, char** argv) {
                     Finish(1);
                 }
                 BackgroundProccess(argv[Index + 1]);
+                break;
+            case str2int("libraries"):
+                std::println("Installed libraries:");
+                for (const auto path : std::filesystem::directory_iterator(librariesdirectory)) {
+                        
+                }
                 break;
             case str2int("make"):
                 if ((std::string){argv[Index + 1] ? argv[Index + 1] : ""} == "template") {

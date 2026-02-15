@@ -13,6 +13,8 @@
 #define RESET   "\e[0m"
 
 const std::string HelpMsg = "I don't want to write how to use this again, Please visit \e[1;37mhttps://github.com/flixytss/C--Make\e[0m to see the usage section";
+extern std::string home;
+extern std::string librariesdirectory;
 
 static void Finish(int status) {
     std::println("{}{}{}", status ? std::format("{}ERR{}: Exited with error {}", REDB, RESET, RED) : std::format("{}GOO{}: Exited correctly {}", GREENB, RESET, GREENB), status, RESET); // Complete
