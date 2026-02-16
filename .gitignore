@@ -1,4 +1,5 @@
 home
 build
 create.conf
-Makefile
+makefile
+.cache

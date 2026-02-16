@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -77,6 +78,12 @@ struct DifferentsOsEntryInfo {
     EntryInfo OnlyMac {};
 };
 
+int files_inside_a_directory(const std::string path) {
+    int files_or_directory = 0;
+    for (const auto _ : std::filesystem::directory_iterator(path)) files_or_directory++;
+    return files_or_directory;
+}
+
 EntryInfo* GetInf(std::string File, bool verbose) {
     std::vector<std::string> Buffer = GetLines(File);
 
@@ -147,6 +154,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
         }
 
         std::vector<std::string> l = split(Line);
+        std::string* library = NULL;
         switch (_str2int(ReadMode)) {
             case _str2int("File"):
                 if (Line.empty() || Line.starts_with("#")) continue;
@@ -221,6 +229,40 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                         }
                         
                         break;
+                    case _str2int("UseLib"):
+                        if (!(l.size() > 2)) {
+                            std::println("{}ERR{}: Set lib argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            Finish(1);
+                        }
+                        
+                        // finding library and checking it
+                        for (const auto li : libraries) if (l.at(1) == li.path().filename().string()) {
+                            if (!std::filesystem::exists(li.path().string() + "/include") || !std::filesystem::exists(li.path().string() + "/lib")) {
+                                std::println("{}ERR{}: Library {} dosen't have the correct structure, Content \"{}\", Line: {}", REDB, RESET, li.path().string(), Line, _Index);
+                                Finish(1);
+                            }
+
+                            library = new std::string;
+                            library->resize(li.path().string().size());
+                            memcpy(library->data(), li.path().c_str(), li.path().string().size());
+
+                            if (!files_inside_a_directory(li.path().string() + "/include")) {
+                                std::println("{}WARN{}: Using empty library {}", YELLOW, RESET, l.at(1));
+                            }
+                        }
+                        if (!library) {
+                            std::println("{}ERR{}: Library not found! (Try installing it in ~/.local/state/c++make/libraries/\"Your library\"), Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            Finish(1);
+                        }
+                        std::println("{}INF{}: Using library {}", YELLOW, RESET, l.at(1));
+
+                        Inf->CompileArgs.push_back(std::make_tuple(("-I" + (*library) + "/include"), l.back()));
+                        Inf->LinkArgs.push_back(("-L" + (*library) + "/lib"));
+
+                        delete library;
+                        library = NULL;
+                        
+                        break;
                     case _str2int("Cores"):
                         if (l.back() == l.front()) {
                             std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
@@ -259,7 +301,6 @@ EntryInfo* GetInf(std::string File, bool verbose) {
     #ifdef __APPLE__
         Inf = &OsEntryInfo.OnlyMac;
     #endif
-    
 
     return Inf;
 }

@@ -1,16 +1,31 @@
 #include <cstdlib>
-#include <files.h>
 #include <cstring>
+#include <files.h>
 #include <filesystem>
-#include <print>
 #include <string>
 #include <exutils.h>
+#include <vector>
 
-EntryInfo inf;
+std::string FileToCopy = "#include <argumentsea.hpp>\n"
+"#include <iostream>\n"
+"#include <string>\n\n"
+"int main(int argc, char** argv) {\n"
+"    ArgumentsManager manager(argv, argc, 1);\n\n"
+"    manager.set_catcher([](const std::string argument){\n"
+"        std::cout << \"Invalid Argument!: \" << argument << std::endl;\n"
+"    });\n\n"
+"    manager.add(\"help\", [](const int index){\n"
+"        std::cout << \"Help command! Argument index: \" << index << std::endl;\n"
+"    });\n\n"
+"    manager.run();\n\n"
+"    return 0;\n"
+"}";
 
 extern void BackgroundProccess(std::string file);
-std::string home = getenv("HOME");
-std::string librariesdirectory = home + "/.local/state/c++make/libraries";
+
+const std::string home = getenv("HOME");
+const std::string librariesdirectory = home + "/.local/state/c++make/libraries";
+std::vector<std::filesystem::directory_entry> libraries;
 
 constexpr int str2int(std::string str) {
     uint num = 0;
@@ -20,10 +35,14 @@ constexpr int str2int(std::string str) {
 int main(int argc, char** argv) {
     if (argc < 1)
         Finish(0);
-    EntryInfo* Inf;
     std::string existingfilewithsignature = "";
 
+    EntryInfo inf;
+    EntryInfo* inf_ptr;
     if ( !std::filesystem::exists(home + "/.local/state/c++make/libraries") ) std::filesystem::create_directories(home + "/.local/state/c++make/libraries");
+
+    for (const auto path : std::filesystem::directory_iterator(librariesdirectory))
+        if (path.is_directory()) libraries.push_back(path);
 
     for (int Index = 0; Index < argc; Index++) {
         const std::string Arg = argv[Index];
@@ -55,9 +74,7 @@ int main(int argc, char** argv) {
                 break;
             case str2int("libraries"):
                 std::println("Installed libraries:");
-                for (const auto path : std::filesystem::directory_iterator(librariesdirectory)) {
-                        
-                }
+                for (auto path : libraries) { std::println("{}: {}", path.path().filename().string(), path.path().string()); }
                 break;
             case str2int("make"):
                 if ((std::string){argv[Index + 1] ? argv[Index + 1] : ""} == "template") {
@@ -73,9 +90,14 @@ int main(int argc, char** argv) {
                     std::filesystem::create_directory(cdirectory + "/build");
                     std::filesystem::create_directory(cdirectory + "/include");
 
-                    WriteFile(cdirectory + "/src/main.cc", "#include <string>\n\nconstexpr long s2i(std::string b){ long l = 0; for (char c : b) l += c; return l; } // AUXILIAR\nint main(int argc, char** argv) { return 0; }");
+                    #ifndef ARGUMENTSEA
+                        WriteFile(cdirectory + "/src/main.cc", "#include <string>\n\nconstexpr long s2i(std::string b){ long l = 0; for (char c : b) l += c; return l; } // AUXILIAR\nint main(int argc, char** argv) { return 0; }");
+                        WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
+                    #else
+                        WriteFile(cdirectory + "/src/main.cc", FileToCopy);
+                        WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\nargumentsea\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
+                    #endif
                     WriteFile(cdirectory + "/compile_flags.txt", "-std=gnu++23\n-Iinclude");
-                    WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
 
                     return 0;
                 }
@@ -90,12 +112,12 @@ int main(int argc, char** argv) {
                         Finish(0);
                     }
                 }
-                Inf = GetInf(existingfilewithsignature.empty() ? (argv[Index + 1] ? argv[Index + 1] : "create.conf") : existingfilewithsignature);
-                if (!Inf->Files.size()) {
+                inf_ptr = GetInf(existingfilewithsignature.empty() ? (argv[Index + 1] ? argv[Index + 1] : "create.conf") : existingfilewithsignature);
+                if (!inf_ptr->Files.size()) {
                     std::println("{}ERR{}: Why would i make a Makefile with no files to compile?", REDB, RESET);
                     Finish(1);
                 }
-                MakeFile(Inf);
+                MakeFile(inf_ptr);
                 break;
             default: // For getting the file
                 if (Index > 0)
@@ -104,7 +126,7 @@ int main(int argc, char** argv) {
                 break;
         }
     }
-    if (inf.Files.size() > 0) MakeFile(Inf);
+    if (inf.Files.size() > 0) MakeFile(&inf);
 
     Finish(0);
 }

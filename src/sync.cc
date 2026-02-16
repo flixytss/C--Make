@@ -1,5 +1,4 @@
 #include <files.h>
-#include <print>
 #include <string>
 #include <exutils.h>
 #include <thread>
@@ -28,6 +27,6 @@ void BackgroundProccess(std::string file) {
             auto inf = GetInf(file);
             std::jthread(run, file, inf).detach();
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }

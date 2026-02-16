@@ -9,7 +9,9 @@ project(c++make
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(UNITY_BUILD_MODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CXX_COMPILER_LAUNCHER ccache)
 
 set(SOURCES
     src/main.cc
@@ -19,9 +21,9 @@ set(SOURCES
     src/sync.cc
 )
 
-add_executable(C++Make ${SOURCES})
+add_executable(c++make ${SOURCES})
 
-target_include_directories(C++Make
+target_include_directories(c++make
     PUBLIC
         includes
 )

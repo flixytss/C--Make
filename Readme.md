@@ -3,6 +3,11 @@
 ## Information about it
 C++Make is a Makefile Generator. Made it with C++, Here is a usage example
 
+## Requirements
+- cmake
+- make
+- simdjson
+
 ## Usage
 `$ C++Make make`
 It will create a file named create.conf that is the base of our Makefile generator  

@@ -1,3 +1,4 @@
+#include <cstring>
 #include <format>
 #include <print>
 #include <exutils.h>
@@ -11,7 +12,7 @@
 
 namespace fs = std::filesystem;
 
-std::vector<std::string> Compilers = {"clang++", "cc", "clang", "nasm", "go"};
+std::vector<std::string> Compilers = {"clang++", "cc", "clang", "nasm"};
 
 class File {
     public:
@@ -166,7 +167,7 @@ void MakeFile(EntryInfo* inf) {
         OutsForParallel.push_back((std::string){path} + ".o");
         Function func {file + ".o", _file};
         func.Dependson.push_back((std::string){path});
-        func.Utils.push_back(std::format("@echo \"[[\033[1;32m Compiling file {} {:.1f}%...\033[0m]]\"", _file.path, ((float)Index / (inf->Files.size())) * 100)); // MODIFY
+        func.Utils.push_back(std::format("@echo -e \"[\\e[1;32m Compiling file {} {:.1f}%... \\e[0m]\"", _file.path, ((float)Index / (inf->Files.size())) * 100)); // MODIFY
         Functions.push_back(func);
 
         Index++;
@@ -194,7 +195,7 @@ void MakeFile(EntryInfo* inf) {
             f.command += ' ' + arg;
 
     Function func {"Link", f};
-    func.Utils.push_back("@echo \"[[\033[1;32m Linking 100%...\033[0m]]\"\n");
+    func.Utils.push_back("@echo -e \"[\\e[1;32m Linking 100%... \\e[0m]\"\n");
 
     WriteFile(file, (std::string){"# Generated Makefile, Just a template. You can modify me\n"} + (inf->Cores ? "" : "\n")); // Init Makefile
     if (inf->Cores > 0)
@@ -213,7 +214,7 @@ void MakeFile(EntryInfo* inf) {
 
         AppendFile(file, ".DEFAULT_GOAL := parallel");
         AppendFile(file, (std::string){"\nparallel:\n\t${MAKE} "} + (EnableCores ? "" : std::format("-f {} ", inf->OutputFile)) + "-j" + std::to_string(inf->Cores)  + " all\n\tfalse\n"); // Call itselfs with the wanted cores
-        func.Utils.push_back("@echo \"[\033[1;32m Parallel build exited correctly, If the makefile says error. Just ignore it...\033[0m]\"\n");
+        func.Utils.push_back("@echo -e \"[\\e[1;32m Parallel build exited correctly, If the makefile says error. Just ignore it... \033[0m]\"\n");
     } else
         AppendFile(file, ".DEFAULT_GOAL := all\n");
     for (const std::string& dep : OutsForParallel)
@@ -226,14 +227,16 @@ void MakeFile(EntryInfo* inf) {
 
     for (const Function& func : Functions) {
         AppendFile(file, func.FunctionName + (func.Dependson.empty() ? ":\n" : ":"));
-        for (const std::string& util : func.Utils)
-            AppendFile(file, '\t' + util + '\n');
         if (!func.Dependson.empty()) {
             for (const std::string& dep : func.Dependson)
                 AppendFile(file, ' ' + dep);
             AppendFile(file, "\n");
         }
-        AppendFile(file, '\t' + func.InsideFile.command + '\n');
+        for (const std::string& util : func.Utils)
+            AppendFile(file, '\t' + util + '\n');
+
+        // making it quiet
+        AppendFile(file, (func.InsideFile.command.empty() ? "\t" : "\t@") + func.InsideFile.command + '\n');
     }
 
     // "All" function
@@ -242,6 +245,6 @@ void MakeFile(EntryInfo* inf) {
 
     AppendFile(file, all + '\n');
     // "Install" function
-    const std::string install = std::format("install:\n\tsudo mv {} /usr/bin", AppPath);
+    const std::string install = AppPath.ends_with(".so") ? std::format("install:\n\tsudo mv {} /usr/lib", AppPath) : std::format("install:\n\tsudo mv {} /usr/bin", AppPath);
     AppendFile(file, install);
 }
