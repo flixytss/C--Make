@@ -27,3 +27,9 @@ target_include_directories(c++make
     PUBLIC
         includes
 )
+option(ARGUMENTSEA "Enable argumentsea" OFF)
+
+if(ARGUMENTSEA)
+    message(STATUS "Argumentsea enabled...")
+    target_compile_definitions(c++make PRIVATE ARGUMENTSEA)
+endif()

@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
                 break;
             case str2int("libraries"):
                 std::println("Installed libraries:");
-                for (auto path : libraries) { std::println("{}: {}", path.path().filename().string(), path.path().string()); }
+                for (auto path : libraries) { std::println("\t{}: {}", path.path().filename().string(), path.path().string()); }
                 break;
             case str2int("make"):
                 if ((std::string){argv[Index + 1] ? argv[Index + 1] : ""} == "template") {
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
                         WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
                     #else
                         WriteFile(cdirectory + "/src/main.cc", FileToCopy);
-                        WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\nargumentsea\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
+                        WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\n-largumentsea\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
                     #endif
                     WriteFile(cdirectory + "/compile_flags.txt", "-std=gnu++23\n-Iinclude");
 
