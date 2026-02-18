@@ -176,7 +176,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                 Inf->LinkArgs.push_back(Line); break;
             case _str2int("Cargs"):
                 if (Line.empty() || Line.starts_with("#")) continue;
-                if (l.back() == l.front()) {
+                if (!(l.size() > 1)) {
                     std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                     Finish(1);
                 }
@@ -189,7 +189,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                 Inf->ProjectName = Line; break;
             case _str2int("Include"):
                 if (Line.empty() || Line.starts_with("#")) continue;
-                if (l.back() == l.front()) {
+                if (!(l.size() > 1)) {
                     std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\", Line {}", REDB, RESET, Line, _Index);
                     Finish(1);
                 }
@@ -202,19 +202,19 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                     case _str2int("AddClean"):
                         Inf->CleanUpFirst = true; break;
                     case _str2int("OutputFile"):
-                        if (l.back() == l.front()) {
+                        if (!(l.size() > 1)) {
                             std::println("{}ERR{}: Set the Output file name, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                             Finish(1);
                         }
                         Inf->OutputFile = l.at(1); break;
                     case _str2int("Linker"):
-                        if (l.back() == l.front()) {
+                        if (!(l.size() > 1)) {
                             std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                             Finish(1);
                         }
                         Inf->Linker = l.at(1); break;
                     case _str2int("Use"):
-                        if (l.back() == l.front()) {
+                        if (!(l.size() > 1)) {
                             std::println("{}ERR{}: Set Os argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                             Finish(1);
                         }
@@ -264,7 +264,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                         
                         break;
                     case _str2int("Cores"):
-                        if (l.back() == l.front()) {
+                        if (!(l.size() > 1)) {
                             std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
                             Finish(1);
                         }

@@ -19,6 +19,7 @@ set(SOURCES
     src/make.cc
     src/inputfile.cc
     src/sync.cc
+    src/install.cc
 )
 
 add_executable(c++make ${SOURCES})

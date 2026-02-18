@@ -2,6 +2,7 @@
 #include <cstring>
 #include <files.h>
 #include <filesystem>
+#include <print>
 #include <string>
 #include <exutils.h>
 #include <vector>
@@ -22,6 +23,7 @@ std::string FileToCopy = "#include <argumentsea.hpp>\n"
 "}";
 
 extern void BackgroundProccess(std::string file);
+extern void install_library(const std::string path);
 
 const std::string home = getenv("HOME");
 const std::string librariesdirectory = home + "/.local/state/c++make/libraries";
@@ -43,6 +45,14 @@ int main(int argc, char** argv) {
 
     for (const auto path : std::filesystem::directory_iterator(librariesdirectory))
         if (path.is_directory()) libraries.push_back(path);
+
+    const auto isin = [](const std::filesystem::path entry) {
+        bool in = false;
+        for (const std::filesystem::directory_entry ent : libraries) {
+            if (ent.path().string() == entry.string()) in = true;
+        }
+        return in;
+    };
 
     for (int Index = 0; Index < argc; Index++) {
         const std::string Arg = argv[Index];
@@ -71,6 +81,32 @@ int main(int argc, char** argv) {
                     Finish(1);
                 }
                 BackgroundProccess(argv[Index + 1]);
+                break;
+            case str2int("install"):
+                if ( !argv[Index + 1] ) {
+                    std::println("{}ERR{}: Command Syntax error", REDB, RESET);
+                    Finish(1);
+                }
+                if ( !std::filesystem::exists(argv[Index + 1]) ) {
+                    std::println("{}ERR{}: That directory dosen't exists", REDB, RESET);
+                    Finish(1);
+                }
+                std::println("{}INF{}: Installing library {}...", YELLOW, RESET, std::filesystem::path(argv[Index + 1]).filename().string());
+                install_library(argv[Index + 1]);
+                std::println("{}INF{}: Library installed locally!", YELLOW, RESET);
+                break;
+            case str2int("remove"):
+                if ( !argv[Index + 1] ) {
+                    std::println("{}ERR{}: Command Syntax error", REDB, RESET);
+                    Finish(1);
+                }
+                if ( !isin(std::filesystem::path(librariesdirectory + "/" + argv[Index + 1])) ) {
+                    std::println("{}ERR{}: That library dosen't exists", REDB, RESET);
+                    Finish(1);
+                }
+                std::println("{}INF{}: Removing library {}...", YELLOW, RESET, argv[Index + 1]);
+                std::filesystem::remove_all(librariesdirectory + "/" + argv[Index + 1]);
+                std::println("{}INF{}: Library removed!", YELLOW, RESET);
                 break;
             case str2int("libraries"):
                 std::println("Installed libraries:");
