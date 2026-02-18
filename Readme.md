@@ -197,6 +197,8 @@ UseCcache
 - Cores - To set parallel build, And set the build cores (Very useless)
 - Use - To copy an OS section, You can modify it without modifying the selected OS section
 - OnlyUseLinker - It will use the linker, It will not add compile functions. It will just link the files that you added
+- UseLib - It let you use your locals libraries (**More information at the final of this readme**), you just have to add the local library name and the compiler it will set it
+like this `UseLib raylib clang++`
 
 #### Run
 ``` bash
@@ -319,11 +321,26 @@ This is if you don't want to create a create.conf, But it is very simple. It can
 `$ C++Make set-build <<Here the argument>> add-arg <<Here the argument>>` It will set a link argument  
 `$ C++Make set-build <<Here the argument>> add-arg <<Here the argument>> <<File>> <<File>>` If you add an uknown argument, it will interpret it like a file
 
-### Sync mode (NEW)
+### Sync mode
 
 Sync mode detect if the config file has changed, If it does, Then it will create a new makefile  
 `$ C++Make sync <<Config file>> &` It will sync with the config file, It will read it looking for changes to remake the makefile.
 **It has to be used as a background proccess with `&`**
+
+### Libraries mode (NEW)
+
+Now in c++make you can have yours libraries in your own user, using the location `~/.local/state/c++make/libraries/`. There will be all of yours libraries  
+¿How can I install a library locally? You just have to go for your folder with the next directorys:
+- include
+- lib (optional)
+And then use the command `c++make install <<The folder>>` and it will extract all the executables, header files and libraries .so. Creating a directory in 
+`~/.local/state/c++make/libraries/` with the your directory name as the name  
+¿How can I delete a library? Just use `c++make install <<The library>>`. You can see your libraries with `c++make libraries`
+
+### Argumentsea (NEW)
+
+This is a new feature, when you are compiling the **c++make** with the new sh file, it will ask you if you want to include **argumentsea**.
+¿What is argumentsea? It's a new library made for ME (i'm the better, i already knew that :3 (**syfm**)). It will let you manage your program arguments more easy to use
 
 ### Extra Info
 
