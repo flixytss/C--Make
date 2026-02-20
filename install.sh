@@ -3,17 +3,13 @@
 mkdir build
 cd build
 
-printf "Enable Argumentsea? (Y, N): "
-read ARG
-if [ $ARG == Y ]; then
-    cmake -DARGUMENTSEA=ON ..
-elif [ $ARG == y ]; then
-    cmake -DARGUMENTSEA=ON ..
-elif [ $ARG == N ]; then
-    cmake -DARGUMENTSEA=OFF ..
-elif [ $ARG == n ]; then
-    cmake -DARGUMENTSEA=OFF ..
-fi
+read -p "Enable Argumentsea? (Y/N): " ARG
+read -p "Enable C++23 (Y/N): " ARG1
+
+ARGUMENTSEA=$([[ ${ARG,,} == y ]] && echo ON || echo OFF)
+CPP23=$([[ ${ARG1,,} == y ]] && echo ON || echo OFF)
+
+cmake -DARGUMENTSEA=$ARGUMENTSEA -DCPP23=$CPP23 ..
 
 make
 sudo mv c++make /usr/bin/c++make

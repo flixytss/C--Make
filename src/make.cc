@@ -1,4 +1,3 @@
-#include <cstring>
 #include <format>
 #include <print>
 #include <exutils.h>
@@ -131,41 +130,41 @@ void MakeFile(EntryInfo* inf) {
     for (const std::string& file : inf->Files) {
         const fs::path path = fs::path(file);
 
-        File _file {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + "clang++"};
+        File _file {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + "clang++"};
 
         for (const auto& tuple : inf->CompilerFilter) {
             if ((std::string){path.filename()}.ends_with(std::get<0>(tuple))) {
-                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + std::get<1>(tuple)}; break;
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + std::get<1>(tuple)}; break;
             }
         }
         std::string ActualCompiler;
         switch (const enum Compilers Compiler = GetCompiler((std::string){path.filename()})) {
             case CC:
                 ActualCompiler = SetCompiler(CompilersInUse, CC);
-                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
                 AddArguments(*inf, &_file);
                 break;
             case CLANGPLUSPLUS:
                 ActualCompiler = SetCompiler(CompilersInUse, CLANGPLUSPLUS);
-                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
                 AddArguments(*inf, &_file);
                 break;
             case CLANG:
                 ActualCompiler = SetCompiler(CompilersInUse, CLANG);
-                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
                 AddArguments(*inf, &_file);
                 break;
             case NASM:
                 ActualCompiler = SetCompiler(CompilersInUse, NASM);
-                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".o", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
                 AddArguments(*inf, &_file);
                 break;
             default: break; // Use the CLANG syntaxis by default
         }
         
-        Outs.push_back((std::string){path.filename()} + ".o");
-        OutsForParallel.push_back((std::string){path} + ".o");
-        Function func {file + ".o", _file};
+        Outs.push_back((std::string){path.filename()} + ".out");
+        OutsForParallel.push_back((std::string){path} + ".out");
+        Function func {file + ".out", _file};
         func.Dependson.push_back((std::string){path});
         func.Utils.push_back(std::format("@echo -e \"[\\e[1;32m Compiling file {} {:.1f}%... \\e[0m]\"", _file.path, ((float)Index / (inf->Files.size())) * 100)); // MODIFY
         Functions.push_back(func);
@@ -245,6 +244,18 @@ void MakeFile(EntryInfo* inf) {
 
     AppendFile(file, all + '\n');
     // "Install" function
-    const std::string install = AppPath.ends_with(".so") ? std::format("install:\n\tsudo mv {} /usr/lib", AppPath) : std::format("install:\n\tsudo mv {} /usr/bin", AppPath);
+    const std::string install = AppPath.ends_with(".so") ? std::format("install: all\n\tsudo mv {} /usr/lib", AppPath) : std::format("install:\n\tsudo mv {} /usr/bin", AppPath);
     AppendFile(file, install);
+
+    if (AppPath.ends_with(".so")) {
+        std::vector<std::filesystem::directory_entry> headers;
+        for (const std::filesystem::directory_entry entry : std::filesystem::recursive_directory_iterator(".")) {
+            if (!entry.is_directory()) { if (entry.path().filename().string().ends_with(".h") || entry.path().filename().string().ends_with(".hpp")) if (ReadFile(entry.path()).starts_with('#')) headers.push_back(entry);}
+        }
+        if (headers.size()) for (const std::filesystem::directory_entry entry : headers) {
+            AppendFile(file, std::format("\n\tsudo mv {} /usr/include/{}\n", entry.path().string(), entry.path().filename().string()));
+        } else {
+            std::println("{}WARN{}: In install function: Only .so files detected, Why would you make a c/c++ library without headers?", YELLOW, RESET);
+        }
+    }
 }

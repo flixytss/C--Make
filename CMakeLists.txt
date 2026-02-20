@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 
 project(c++make
     LANGUAGES CXX
-    VERSION 2.0
+    VERSION 3.0
     DESCRIPTION "A Makefile Generator, Just that..."
 )
 
@@ -29,8 +29,13 @@ target_include_directories(c++make
         includes
 )
 option(ARGUMENTSEA "Enable argumentsea" OFF)
+option(CPP23 "Enable C++23 (For std::println)" OFF)
 
 if(ARGUMENTSEA)
     message(STATUS "Argumentsea enabled...")
     target_compile_definitions(c++make PRIVATE ARGUMENTSEA)
+endif()
+if(CPP23)
+    message(STATUS "C++23 enabled...")
+    target_compile_definitions(c++make PRIVATE CPP23)
 endif()

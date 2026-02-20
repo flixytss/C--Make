@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <cstring>
 #include <files.h>
 #include <filesystem>
 #include <print>
@@ -8,18 +7,34 @@
 #include <vector>
 
 std::string FileToCopy = "#include <argumentsea.hpp>\n"
-"#include <iostream>\n"
-"#include <string>\n\n"
+"#include <iostream>\n\n"
+"void help(ArgumentsManager* manager) {\n"
+"   std::cout << \"Help command! Argument index: \" << manager->get_index() << std::endl;\n"
+"}\n"
+"void catcher(ArgumentsManager* manager) {\n"
+"   std::cout << \"Invalid Argument!: \" << argument << std::endl;\n"
+"}\n"
 "int main(int argc, char** argv) {\n"
-"    ArgumentsManager manager(argv, argc, 1);\n\n"
-"    manager.set_catcher([](const std::string argument){\n"
-"        std::cout << \"Invalid Argument!: \" << argument << std::endl;\n"
-"    });\n\n"
-"    manager.add(\"help\", [](const int index){\n"
-"        std::cout << \"Help command! Argument index: \" << index << std::endl;\n"
-"    });\n\n"
-"    manager.run();\n\n"
-"    return 0;\n"
+"   ArgumentsManager manager(argv, argc, 1);\n\n"
+"   manager.set_catcher(catcher);\n"
+"   manager.add(\"help\", help);\n\n"
+"   manager.run();\n\n"
+"   return 0;\n"
+"}";
+std::string FileToCopyC23 = "#include <argumentsea.hpp>\n"
+"#include <print>\n\n"
+"void help(ArgumentsManager* manager) {\n"
+"   std::println(\"Help index: {}\", manager->get_index());\n"
+"}\n"
+"void catcher(ArgumentsManager* manager) {\n"
+"   std::println(\"Wrong argument index: {}\", manager->get_index());\n"
+"}\n"
+"int main(int argc, char** argv) {\n"
+"   ArgumentsManager manager(argv, argc, 1);\n\n"
+"   manager.set_catcher(catcher);\n"
+"   manager.add(\"help\", help);\n\n"
+"   manager.run();\n\n"
+"   return 0;\n"
 "}";
 
 extern void BackgroundProccess(std::string file);
@@ -39,7 +54,6 @@ int main(int argc, char** argv) {
         Finish(0);
     std::string existingfilewithsignature = "";
 
-    EntryInfo inf;
     EntryInfo* inf_ptr;
     if ( !std::filesystem::exists(home + "/.local/state/c++make/libraries") ) std::filesystem::create_directories(home + "/.local/state/c++make/libraries");
 
@@ -61,27 +75,13 @@ int main(int argc, char** argv) {
             case str2int("help"):
                 std::println("{}", HelpMsg);
                 break;
-            case str2int("set-build"):
-                if ( !argv[Index + 1] ) {
-                    std::println("{}ERR{}: Command Syntax error", REDB, RESET);
-                    Finish(1);
-                }
-                inf.BuildDirectory = argv[Index + 1];
-                break;
-            case str2int("add-arg"):
-                if ( !argv[Index + 1] ) {
-                    std::println("{}ERR{}: Command Syntax error", REDB, RESET);
-                    Finish(1);
-                }
-                inf.LinkArgs.push_back(argv[Index + 1]);
-                break;
             case str2int("sync"):
                 if ( !argv[Index + 1] ) {
                     std::println("{}ERR{}: Command Syntax error", REDB, RESET);
                     Finish(1);
                 }
                 BackgroundProccess(argv[Index + 1]);
-                break;
+                Finish(0);
             case str2int("install"):
                 if ( !argv[Index + 1] ) {
                     std::println("{}ERR{}: Command Syntax error", REDB, RESET);
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
                 std::println("{}INF{}: Installing library {}...", YELLOW, RESET, std::filesystem::path(argv[Index + 1]).filename().string());
                 install_library(argv[Index + 1]);
                 std::println("{}INF{}: Library installed locally!", YELLOW, RESET);
-                break;
+                Finish(0);
             case str2int("remove"):
                 if ( !argv[Index + 1] ) {
                     std::println("{}ERR{}: Command Syntax error", REDB, RESET);
@@ -107,7 +107,18 @@ int main(int argc, char** argv) {
                 std::println("{}INF{}: Removing library {}...", YELLOW, RESET, argv[Index + 1]);
                 std::filesystem::remove_all(librariesdirectory + "/" + argv[Index + 1]);
                 std::println("{}INF{}: Library removed!", YELLOW, RESET);
-                break;
+                Finish(0);
+            case str2int("bin"):
+                if ( !argv[Index + 1] || !argv[Index + 2] ) {
+                    std::println("{}ERR{}: Command Syntax error", REDB, RESET);
+                    Finish(1);
+                }
+                if ( !isin(std::filesystem::path(librariesdirectory + "/" + argv[Index + 1])) ) {
+                    std::println("{}ERR{}: That library dosen't exists", REDB, RESET);
+                    Finish(1);
+                }
+                std::system((std::string){librariesdirectory + "/" + argv[Index + 1] + "/bin/" + argv[Index + 2]}.c_str());
+                Finish(0);
             case str2int("libraries"):
                 std::println("Installed libraries:");
                 for (auto path : libraries) { std::println("\t{}: {}", path.path().filename().string(), path.path().string()); }
@@ -127,15 +138,19 @@ int main(int argc, char** argv) {
                     std::filesystem::create_directory(cdirectory + "/include");
 
                     #ifndef ARGUMENTSEA
-                        WriteFile(cdirectory + "/src/main.cc", "#include <string>\n\nconstexpr long s2i(std::string b){ long l = 0; for (char c : b) l += c; return l; } // AUXILIAR\nint main(int argc, char** argv) { return 0; }");
-                        WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
+                        WriteFile(cdirectory + "/src/main.cpp", "#include <string>\n\nconstexpr long s2i(std::string b){ long l = 0; for (char c : b) l += c; return l; } // AUXILIAR\nint main(int argc, char** argv) { return 0; }");
+                        WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc .cpp\n#: Link args\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cpp clang++");
                     #else
-                        WriteFile(cdirectory + "/src/main.cc", FileToCopy);
-                        WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc/main.cc\n#: Link args\n-largumentsea\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cc clang++");
+                        #ifndef CPP23
+                            WriteFile(cdirectory + "/src/main.cpp", FileToCopy);
+                        #else
+                            WriteFile(cdirectory + "/src/main.cpp", FileToCopyC23);
+                        #endif
+                        WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc .cpp\n#: Link args\n-largumentsea\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cpp clang++");
                     #endif
                     WriteFile(cdirectory + "/compile_flags.txt", "-std=gnu++23\n-Iinclude");
 
-                    return 0;
+                    Finish(0);
                 }
 
                 if ( !std::filesystem::exists("create.conf") ) {
@@ -154,15 +169,18 @@ int main(int argc, char** argv) {
                     Finish(1);
                 }
                 MakeFile(inf_ptr);
-                break;
-            default: // For getting the file
-                if (Index > 0)
-                    if (strcmp(argv[Index - 1], "set-build") != 0 && strcmp(argv[Index - 1], "add-arg") != 0 && strcmp(argv[Index - 1], "make") != 0 && strcmp(argv[Index - 1], "sync") != 0)
-                        inf.Files.push_back(Arg);
+                Finish(0);
+            default:
+                if (!(Index > 0)) break;
+                if ( !std::filesystem::exists(Arg) )
+                    std::println("{}ERR{}: That command (or file) dosen't exists", REDB, RESET);
+                else {
+                    
+                }
+                Finish(1);
                 break;
         }
     }
-    if (inf.Files.size() > 0) MakeFile(&inf);
 
     Finish(0);
 }
