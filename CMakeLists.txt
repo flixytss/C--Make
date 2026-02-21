@@ -20,10 +20,15 @@ set(SOURCES
     src/inputfile.cc
     src/sync.cc
     src/install.cc
+    src/json.cc
 )
 
 add_executable(c++make ${SOURCES})
 
+target_link_options(c++make
+    PUBLIC
+        -lsimdjson
+)
 target_include_directories(c++make
     PUBLIC
         includes

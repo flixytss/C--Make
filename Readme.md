@@ -309,17 +309,10 @@ In the first section called "Windows" Made config in front of it part of windows
 - src - Directory: Sources
 - build - Directory: Out directory for all the objects file and the executable
 - include - Directory: Files for the headers files
-- src/main.cc - File: Just a c++ file with nothing inside  
+- src/main.cc - File: Just a c++ file  
 
 `$ C++Make help` Just the help command (Just says something stupid...)  
-
-#### Creating from the command line
-
-This is if you don't want to create a create.conf, But it is very simple. It can't let you modify almost nothing (Just let you add files, a output directory and set arguments)
-
-`$ C++Make set-build <<Here the argument>>` It will set the output directory  
-`$ C++Make set-build <<Here the argument>> add-arg <<Here the argument>>` It will set a link argument  
-`$ C++Make set-build <<Here the argument>> add-arg <<Here the argument>> <<File>> <<File>>` If you add an uknown argument, it will interpret it like a file
+Now in c++make (**NEW**) you can compile an individual file with `$ C++Make <<C/C++ file>>` and it will compile it
 
 ### Sync mode
 

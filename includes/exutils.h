@@ -19,6 +19,12 @@ extern const std::string home;
 extern const std::string librariesdirectory;
 extern std::vector<std::filesystem::directory_entry> libraries;
 
+constexpr int str2int(std::string str) {
+    uint num = 0;
+    for (char i : str) num += i;
+    return num;
+}
+
 static void Finish(int status) {
     std::println("{}{}{}", status ? std::format("{}ERR{}: Exited with error {}", REDB, RESET, RED) : std::format("{}GOO{}: Exited correctly {}", GREENB, RESET, GREENB), status, RESET); // Complete
     exit(status);
@@ -26,13 +32,11 @@ static void Finish(int status) {
 
 typedef struct EntryInfo {
     std::vector<std::string> Files;
-    std::string Directory = "";
     std::string BuildDirectory = "";
     std::vector<std::string> LinkArgs;
     std::vector<std::tuple<std::string, std::string>> CompileArgs;
     std::string ProjectName = "";
     bool Ccache = false;
-    std::string Compiler = "";
     std::vector<std::string> Run;
     std::vector<std::tuple<std::string, std::string>> CompilerFilter;
     std::string OutputFile = "";

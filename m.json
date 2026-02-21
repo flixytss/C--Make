@@ -1,0 +1,17 @@
+{
+    "files": ["archivo.c", "archivo2.cc"],
+    "compilers-filter": {
+        ".cc": "clang++",
+        ".c": "clang"
+    },
+    "includes": {
+        "clang++": "as",
+        "clang": "raylib"
+    },
+    "extra": {
+        "only-linker": false,
+        "use-ccache": false,
+        "add-clean": true,
+        "use-lib": ["raylib", "clang++"]
+    }
+}

@@ -11,7 +11,7 @@
 
 namespace fs = std::filesystem;
 
-std::vector<std::string> Compilers = {"clang++", "cc", "clang", "nasm"};
+std::string Compilers[4] = {"clang++", "cc", "clang", "nasm"};
 
 class File {
     public:
@@ -77,7 +77,7 @@ std::string SetCompiler(std::vector<enum Compilers> CompilersInUse, enum Compile
     return ActualCompiler;
 }
 const std::string tolowercase(const std::string str) {
-    for (int i = 0; i < str.size(); i++) if (str[i]>=0x41&&str[i]<=0x5A) *(char*)&str[i]+=32;
+    for (int i = 0; i < str.size(); i++) if (str.at(i)>=0x41&&str.at(i)<=0x5A) *(char*)&str[i]+=32;
     return str;
 }
 void MakeFile(EntryInfo* inf) {
@@ -174,10 +174,8 @@ void MakeFile(EntryInfo* inf) {
 
     File f {"", "", ""}; // For the link command
     
-    if (inf->Compiler.empty())
-        f.command = (inf->Linker.empty() ? Compilers[CompilersInUse[0]] : inf->Linker);
-    else
-        f.command = (inf->Linker.empty() ? inf->Compiler : inf->Linker) + " ";
+    f.command = (inf->Linker.empty() ? Compilers[CompilersInUse.empty() ? 0 : CompilersInUse.at(0)] : inf->Linker);
+    
     if (!inf->OnlyLinker) {
         f.command += ' ';
         for (const std::string& out : Outs)
@@ -192,6 +190,7 @@ void MakeFile(EntryInfo* inf) {
     if (inf->LinkArgs.size() > 0)
         for (const std::string& arg : inf->LinkArgs)
             f.command += ' ' + arg;
+    
 
     Function func {"Link", f};
     func.Utils.push_back("@echo -e \"[\\e[1;32m Linking 100%... \\e[0m]\"\n");
@@ -223,6 +222,7 @@ void MakeFile(EntryInfo* inf) {
         func.Dependson.clear();
     }
     if (inf->Files.size() || inf->OnlyLinker) Functions.push_back(func);
+    
 
     for (const Function& func : Functions) {
         AppendFile(file, func.FunctionName + (func.Dependson.empty() ? ":\n" : ":"));

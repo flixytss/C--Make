@@ -1,10 +1,12 @@
+#include <cstdio>
 #include <cstdlib>
-#include <files.h>
 #include <filesystem>
+#include <format>
 #include <print>
 #include <string>
 #include <exutils.h>
 #include <vector>
+#include <files.h>
 
 std::string FileToCopy = "#include <argumentsea.hpp>\n"
 "#include <iostream>\n\n"
@@ -43,11 +45,12 @@ extern void install_library(const std::string path);
 const std::string home = getenv("HOME");
 const std::string librariesdirectory = home + "/.local/state/c++make/libraries";
 std::vector<std::filesystem::directory_entry> libraries;
+int RunShellCommand(const std::string c);
+const EntryInfo GetInfFromJson(const std::filesystem::path path);
 
-constexpr int str2int(std::string str) {
-    uint num = 0;
-    for (char i : str) num += i;
-    return num;
+const std::string toupper(const std::string str) {
+    for (int i = 0; i < str.size(); i++) if ((str)[i]>=0x61&&(str)[i]<=0x7A) *(char*)&str[i]-=32;
+    return str;
 }
 int main(int argc, char** argv) {
     if (argc < 1)
@@ -66,6 +69,15 @@ int main(int argc, char** argv) {
             if (ent.path().string() == entry.string()) in = true;
         }
         return in;
+    };
+
+    const auto compilefile = [](const std::string path, const std::string compiler){
+        int errco;
+        std::println("{}\t{}", toupper(compiler), path);
+        if ( (errco = RunShellCommand(std::format("{} {} -o {}", compiler, path, std::filesystem::path(path).filename().string()))) < 0) {
+            std::println("{}ERR{}: Compiler failed with error code: {}", REDB, RESET, errco);
+            Finish(1);
+        }
     };
 
     for (int Index = 0; Index < argc; Index++) {
@@ -123,6 +135,17 @@ int main(int argc, char** argv) {
                 std::println("Installed libraries:");
                 for (auto path : libraries) { std::println("\t{}: {}", path.path().filename().string(), path.path().string()); }
                 break;
+            case str2int("json"):
+                if ( !argv[Index + 1] ) {
+                    std::println("{}ERR{}: Command Syntax error", REDB, RESET);
+                    Finish(1);
+                }
+                inf_ptr = new EntryInfo;
+                *inf_ptr = GetInfFromJson(std::filesystem::path(argv[Index + 1]));
+                MakeFile(inf_ptr);
+                delete inf_ptr;
+
+                Finish(0);
             case str2int("make"):
                 if ((std::string){argv[Index + 1] ? argv[Index + 1] : ""} == "template") {
                     std::string cdirectory = ".";
@@ -175,7 +198,9 @@ int main(int argc, char** argv) {
                 if ( !std::filesystem::exists(Arg) )
                     std::println("{}ERR{}: That command (or file) dosen't exists", REDB, RESET);
                 else {
-                    
+                    if (Arg.ends_with(".c")) { compilefile(Arg, "clang"); }
+                    if (Arg.ends_with(".cc")) { compilefile(Arg, "cc"); }
+                    if (Arg.ends_with(".cpp")) { compilefile(Arg, "clang++"); }
                 }
                 Finish(1);
                 break;
@@ -183,4 +208,12 @@ int main(int argc, char** argv) {
     }
 
     Finish(0);
+}
+int RunShellCommand(const std::string c) {
+    FILE* pipe = popen(c.c_str(), "r");
+
+    char* buffer = new char[1024];
+    while (fgets(buffer, 1024, pipe) != NULL) std::print("{}", buffer);
+
+    return WEXITSTATUS(pclose(pipe));
 }
