@@ -8,7 +8,7 @@
 #include <vector>
 #include <files.h>
 
-std::string FileToCopy = "#include <argumentsea.hpp>\n"
+const std::string FileToCopy = "#include <argumentsea.hpp>\n"
 "#include <iostream>\n\n"
 "void help(ArgumentsManager* manager) {\n"
 "   std::cout << \"Help command! Argument index: \" << manager->get_index() << std::endl;\n"
@@ -23,7 +23,7 @@ std::string FileToCopy = "#include <argumentsea.hpp>\n"
 "   manager.run();\n\n"
 "   return 0;\n"
 "}";
-std::string FileToCopyC23 = "#include <argumentsea.hpp>\n"
+const std::string FileToCopyC23 = "#include <argumentsea.hpp>\n"
 "#include <print>\n\n"
 "void help(ArgumentsManager* manager) {\n"
 "   std::println(\"Help index: {}\", manager->get_index());\n"
@@ -37,6 +37,27 @@ std::string FileToCopyC23 = "#include <argumentsea.hpp>\n"
 "   manager.add(\"help\", help);\n\n"
 "   manager.run();\n\n"
 "   return 0;\n"
+"}";
+const std::string FileJsonToCopy = "{\n"
+"    \"project-name\": \"Default template\",\n"
+"    \"files\": [\n"
+"        [\"src\", \".cc\"]\n"
+"    ],\n"
+"    \"buildir\": \"home\",\n"
+"    \"compilers-filter\": {\n"
+"        \".cc\": \"clang++\"\n"
+"    },\n"
+"    \"run-before\": [\"@echo Causa-san\"],\n"
+"    \"link-args\": [\"-lsimdjson\"],\n"
+"    \"compile-args\": {\n"
+"        \"clang++\": \"--std=gnu++23\"\n"
+"    },\n"
+"    \"includes\": {\n"
+"        \"clang++\": \"includes\"\n"
+"    },\n"
+"    \"extra\": {\n"
+"        \"use-ccache\": true\n"
+"    }\n"
 "}";
 
 extern void BackgroundProccess(std::string file);
@@ -140,6 +161,42 @@ int main(int argc, char** argv) {
                     std::println("{}ERR{}: Command Syntax error", REDB, RESET);
                     Finish(1);
                 }
+                if ((std::string){argv[Index + 1] ? argv[Index + 1] : ""} == "template") {
+                    std::string cdirectory = ".";
+
+                    if ( argv[Index + 2] ) {
+                        cdirectory = argv[Index + 2];
+                        std::println("Copying template into {}...", cdirectory);
+                    }
+                    if ( !std::filesystem::exists(cdirectory) && cdirectory != "." ) std::filesystem::create_directories(cdirectory);
+
+                    std::filesystem::create_directory(cdirectory + "/src"); // directories
+                    std::filesystem::create_directory(cdirectory + "/build");
+                    std::filesystem::create_directory(cdirectory + "/include");
+
+                    #ifndef ARGUMENTSEA
+                        WriteFile(cdirectory + "/src/main.cpp", "#include <string>\n\nconstexpr long s2i(std::string b){ long l = 0; for (char c : b) l += c; return l; } // AUXILIAR\nint main(int argc, char** argv) { return 0; }");
+                    #else
+                        #ifndef CPP23
+                            WriteFile(cdirectory + "/src/main.cpp", FileToCopy);
+                        #else
+                            WriteFile(cdirectory + "/src/main.cpp", FileToCopyC23);
+                        #endif
+                    #endif
+                    WriteFile(cdirectory + "/compile_flags.txt", "-std=gnu++23\n-Iinclude");
+                    WriteFile("create.json", FileJsonToCopy);
+
+                    Finish(0);
+                }
+                if ( !std::filesystem::exists("create.json") && !argv[Index + 1] )
+                    WriteFile("create.json", FileJsonToCopy);
+                if ( argv[Index + 1] ) {
+                    if ( !std::filesystem::exists(argv[Index + 1]) ) {
+                        WriteFile(argv[Index + 1], FileJsonToCopy);
+                        Finish(0);
+                    }
+                }
+                
                 inf_ptr = new EntryInfo;
                 *inf_ptr = GetInfFromJson(std::filesystem::path(argv[Index + 1]));
                 MakeFile(inf_ptr);
@@ -214,6 +271,7 @@ int RunShellCommand(const std::string c) {
 
     char* buffer = new char[1024];
     while (fgets(buffer, 1024, pipe) != NULL) std::print("{}", buffer);
+    delete [] buffer;
 
     return WEXITSTATUS(pclose(pipe));
 }

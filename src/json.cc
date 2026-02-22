@@ -26,19 +26,45 @@ const EntryInfo GetInfFromJson(const std::filesystem::path path) {
         switch (str2int(json.key.data())) {
             case str2int("files"):
                 if (json.value.type() == simdjson::dom::element_type::ARRAY) {
-                    for (const auto file : json.value) { Inf.Files.push_back(file.get_string()->data()); }
-                }
-                else if (json.value.type() == simdjson::dom::element_type::STRING) {
-                    // Something...
-                    std::println("String");
+                    for (const auto file : json.value) {
+                        if (file.is_array()) {
+                            if (!file.get_array()->at(0)->is_string()) {
+                                std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (STRING)", REDB, RESET, json.key);
+                                Finish(1);
+                            }
+                            if (!file.get_array()->at(1)->is_string() && !file.get_array()->at(1).is_null()) {
+                                std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (STRING)", REDB, RESET, json.key);
+                                Finish(1);
+                            }
+
+                            if ( !std::filesystem::exists(file.get_array()->at(0)->get_string()->data()) ) {
+                                std::println("{}ERR{}: Directory {} dosen't exists", REDB, RESET, file.get_array()->at(0)->get_string()->data());
+                                Finish(1);
+                            } else {
+                                if (!std::filesystem::directory_entry(std::filesystem::path(file.get_array()->at(0)->get_string()->data())).is_directory()) {
+                                    std::println("{}ERR{}: File {} isn't a directory", REDB, RESET, file.get_array()->at(0)->get_string()->data());
+                                    Finish(1);
+                                }
+                            }
+                            for (const std::filesystem::directory_entry entry : std::filesystem::directory_iterator(file.get_array()->at(0)->get_string()->data())) {
+                                if (file.get_array()->at(1)->is_null()) { Inf.Files.push_back(entry.path().string()); }
+                                else {
+                                    if (entry.path().filename().string().ends_with(file.get_array()->at(1)->get_string()->data()))
+                                        Inf.Files.push_back(entry.path().string());
+                                }
+                            }
+                        } else
+                            Inf.Files.push_back(file.get_string()->data());
+                    }
+
                 } else {
-                    std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (Array or String)", REDB, RESET, json.key);
+                    std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (ARRAY)", REDB, RESET, json.key);
                     Finish(1);
                 }
                 break;
             case str2int("buildir"):
                 if (json.value.type() != simdjson::dom::element_type::STRING) {
-                    std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (String)", REDB, RESET, json.key);
+                    std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (STRING)", REDB, RESET, json.key);
                     Finish(1);
                 }
                 Inf.BuildDirectory = json.value;
@@ -60,12 +86,12 @@ const EntryInfo GetInfFromJson(const std::filesystem::path path) {
                         std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (STRING)", REDB, RESET, json.key);
                         Finish(1);
                     }
-                    Inf.CompileArgs.push_back(std::make_tuple(obj.key.data(), obj.value.get_string()->data()));
+                    Inf.CompileArgs.push_back(std::make_tuple(obj.value.get_string()->data(), obj.key.data()));
                 }
                 break;
             case str2int("project-name"):
                 if (json.value.type() != simdjson::dom::element_type::STRING) {
-                    std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (String)", REDB, RESET, json.key);
+                    std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (STRING)", REDB, RESET, json.key);
                     Finish(1);
                 }
                 Inf.ProjectName = json.value.get_string()->data();
@@ -77,7 +103,7 @@ const EntryInfo GetInfFromJson(const std::filesystem::path path) {
                 }
                 for (const auto command : json.value) {
                     if ( !command.is_string() ) {
-                        std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (String)", REDB, RESET, json.key);
+                        std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (STRING)", REDB, RESET, json.key);
                         Finish(1);
                     }
                     Inf.Run.push_back(command.get_string()->data());
@@ -111,7 +137,7 @@ const EntryInfo GetInfFromJson(const std::filesystem::path path) {
                 break;
             case str2int("output-file"):
                 if (json.value.type() != simdjson::dom::element_type::STRING) {
-                    std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (String)", REDB, RESET, json.key);
+                    std::println("{}ERR{}: IN \"{}\": \"A wrong type\"; Wrong type (STRING)", REDB, RESET, json.key);
                     Finish(1);
                 }
                 Inf.OutputFile = json.value.get_string()->data();

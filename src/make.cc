@@ -88,21 +88,14 @@ void MakeFile(EntryInfo* inf) {
     const std::string file = inf->OutputFile.empty() ? "Makefile" : inf->OutputFile;
 
     std::vector<std::string> Outs;
+    std::vector<std::string> OutsForFiles;
     std::vector<std::string> OutsForParallel;
 
-    if (inf->CleanUpFirst) {
-        File clean {"", "", ""};
-        clean.command = inf->CleanUpFirst ? "@echo \"[INFO] Cleaning...\"\n\t-@rm " + (inf->BuildDirectory.empty() ? "*.o" : (inf->BuildDirectory + "/*.o")) : "";
-
-        Function cleanrun {"clean", clean};
-
-        Functions.push_back(cleanrun);
-    }
-
     File run {"", "", ""}; // For the Run command
-    run.command = inf->Run.size() ? ("@echo \"[INFO] Running commands...\"\n") : "";
+    run.command.clear();
 
     Function funcrun {"run", run};
+    if (inf->Run.size()) funcrun.Utils.push_back("@echo \"[INFO] Running commands...\"\n");
 
     for (const std::string& _run : inf->Run)
         funcrun.Utils.push_back(_run);
@@ -142,21 +135,25 @@ void MakeFile(EntryInfo* inf) {
             case CC:
                 ActualCompiler = SetCompiler(CompilersInUse, CC);
                 _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                OutsForFiles.push_back(inf->BuildDirectory + "/" + (std::string){path.filename()} + ".out");
                 AddArguments(*inf, &_file);
                 break;
             case CLANGPLUSPLUS:
                 ActualCompiler = SetCompiler(CompilersInUse, CLANGPLUSPLUS);
                 _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                OutsForFiles.push_back(inf->BuildDirectory + "/" + (std::string){path.filename()} + ".out");
                 AddArguments(*inf, &_file);
                 break;
             case CLANG:
                 ActualCompiler = SetCompiler(CompilersInUse, CLANG);
                 _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                OutsForFiles.push_back(inf->BuildDirectory + "/" + (std::string){path.filename()} + ".out");
                 AddArguments(*inf, &_file);
                 break;
             case NASM:
                 ActualCompiler = SetCompiler(CompilersInUse, NASM);
                 _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                OutsForFiles.push_back(inf->BuildDirectory + "/" + (std::string){path.filename()} + ".out");
                 AddArguments(*inf, &_file);
                 break;
             default: break; // Use the CLANG syntaxis by default
@@ -222,7 +219,16 @@ void MakeFile(EntryInfo* inf) {
         func.Dependson.clear();
     }
     if (inf->Files.size() || inf->OnlyLinker) Functions.push_back(func);
-    
+
+    if (inf->CleanUpFirst) {
+        File nothing {"", "", ""}; nothing.command.clear();
+
+        Function cleanrun {"clean", nothing};
+        cleanrun.Utils.push_back("@echo [INFO] Cleaning...");
+        for (const std::string out : OutsForFiles) { cleanrun.Utils.push_back("-@rm " + out); }
+
+        Functions.push_back(cleanrun);
+    }
 
     for (const Function& func : Functions) {
         AppendFile(file, func.FunctionName + (func.Dependson.empty() ? ":\n" : ":"));

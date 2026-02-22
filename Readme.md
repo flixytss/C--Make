@@ -8,7 +8,7 @@ C++Make is a Makefile Generator. Made it with C++, Here is a usage example
 - make
 - simdjson
 
-## Usage
+## Usage (Conf)
 `$ C++Make make`
 It will create a file named create.conf that is the base of our Makefile generator  
 `$ C++Make make c.conf` You can also add a file name, It will create the file if it dosen't exists
@@ -303,7 +303,56 @@ UseCcache
 In the first section called "Windows" Made config in front of it part of windows, You can add more OSs sections Like Mac and Linux  
 **Depending on the os name, the config will be used by the specific os**. If there isn't a config for you os, you will get the last config
 
-### Executable Arguments
+## Usage (Json) (NEW)
+
+You can make a makefile with just a json file, Just like this:
+```json
+{
+    "project-name": "C++m",
+    "files": [
+        ["src", ".cc"],
+        "file1.cc"
+    ],
+    "buildir": "home",
+    "compilers-filter": {
+        ".cc": "clang++"
+    },
+    "run-before": ["@echo \"Causa-san\""],
+    "link-args": ["-lsimdjson"],
+    "compile-args": {
+        "clang++": "--std=gnu++23"
+    },
+    "includes": {
+        "clang++": "includes"
+    },
+    "extra": {
+        "only-linker": false,
+        "use-ccache": true,
+        "add-clean": true,
+        "use-linker": "clang++",
+        "use-lib": ["raylib", "clang++"],
+        "set-cores": 0
+    }
+}
+```
+Just read it, It is very easy to understand. First thing that we read is `project-name`: is just the project name
+- `files` - Is the files that the makefile gonna has, You can put an array or a string with the file location, **In the array, The first argument 
+is where are the files that are going to be include in the makefile (**It can be null to add all the files inside the directory**), **And the second argument will see if the file ends with itself, if not, the file will not be include in the makefile**
+- `buildir` - Set the output directory
+- `compilers-filter` - It will set a compiler to the files that end with the first argument
+- `run-before` - It set the commands that are going to be in the makefile before the compilation section
+- `link-args` - Set the linker arguments
+- `compile-args` - It will set the selected argument to the selected compiler
+- `includes` - It will include a directory to the selected compiler
+- `extra` - Are extras, Which are these:
+    - `only-linker` - If enabled, The makefile is going to use the given files to link it all without the compiling section
+    - `use-ccache` - If enabled, The makefile is going to use ccache
+    - `add-clean` - It will add a clean function
+    - `use-linker` - Set a different linker
+    - `use-lib` - It will add a library installed in `~/.local/state/c++make/libraries/` to the selected compiler
+    - `set-cores` - It will enable the paralel builds mode with the selected cores
+
+## Executable Arguments
 
 `$ C++Make make template` Will create a template with the following things:
 - src - Directory: Sources
