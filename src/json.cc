@@ -19,7 +19,11 @@ const EntryInfo GetInfFromJson(const std::filesystem::path path) {
         Finish(1);
     }
 
-    const auto root = doc.get_object();
+    if ( !doc.is_object() ) {
+        std::println("{}ERR{}: Main object not found!", REDB, RESET);
+        Finish(1);
+    }
+    const simdjson::simdjson_result<simdjson::dom::object> root = doc.get_object();
 
     std::string* library = NULL;
     for (const auto json : root) {

@@ -94,7 +94,6 @@ EntryInfo* GetInf(std::string File, bool verbose) {
     bool osModeEnabled = false;
     static DifferentsOsEntryInfo OsEntryInfo {};
 
-    int _Index = 0;
     for (const std::string& Line : Buffer) {
         if (Line.starts_with("#: ")) {
             std::string Parameter = Line.empty() ? "" : getfromindex(Line, 3);
@@ -179,7 +178,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
             case _str2int("Cargs"):
                 if (Line.empty() || Line.starts_with("#")) continue;
                 if (!(l.size() > 1)) {
-                    std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                    std::println("{}ERR{}: Set for which compilers is the argument!, Content \"{}\"", REDB, RESET, Line);
                     Finish(1);
                 }
                 Inf->CompileArgs.push_back(std::make_tuple(l.at(0), l.at(1))); break;
@@ -192,7 +191,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
             case _str2int("Include"):
                 if (Line.empty() || Line.starts_with("#")) continue;
                 if (!(l.size() > 1)) {
-                    std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\", Line {}", REDB, RESET, Line, _Index);
+                    std::println("{}ERR{}: Set for which compilers is the include!, Content \"{}\"", REDB, RESET, Line);
                     Finish(1);
                 }
                 Inf->CompileArgs.push_back(std::make_tuple("-I " + l.at(0), l.at(1))); break;
@@ -205,19 +204,19 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                         Inf->CleanUpFirst = true; break;
                     case _str2int("OutputFile"):
                         if (!(l.size() > 1)) {
-                            std::println("{}ERR{}: Set the Output file name, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            std::println("{}ERR{}: Set the Output file name, Content \"{}\"", REDB, RESET, Line);
                             Finish(1);
                         }
                         Inf->OutputFile = l.at(1); break;
                     case _str2int("Linker"):
                         if (!(l.size() > 1)) {
-                            std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            std::println("{}ERR{}: Set Linker argument, Content \"{}\"", REDB, RESET, Line);
                             Finish(1);
                         }
                         Inf->Linker = l.at(1); break;
                     case _str2int("Use"):
                         if (!(l.size() > 1)) {
-                            std::println("{}ERR{}: Set Os argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            std::println("{}ERR{}: Set Os argument, Content \"{}\"", REDB, RESET, Line);
                             Finish(1);
                         }
                         switch (_str2int(l.at(1))) {
@@ -233,14 +232,14 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                         break;
                     case _str2int("UseLib"):
                         if (!(l.size() > 2)) {
-                            std::println("{}ERR{}: Set lib argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            std::println("{}ERR{}: Set lib argument, Content \"{}\"", REDB, RESET, Line);
                             Finish(1);
                         }
                         
                         // finding library and checking it
                         for (const auto li : libraries) if (l.at(1) == li.path().filename().string()) {
                             if (!std::filesystem::exists(li.path().string() + "/include") || !std::filesystem::exists(li.path().string() + "/lib")) {
-                                std::println("{}ERR{}: Library {} dosen't have the correct structure, Content \"{}\", Line: {}", REDB, RESET, li.path().string(), Line, _Index);
+                                std::println("{}ERR{}: Library {} dosen't have the correct structure, Content \"{}\"", REDB, RESET, li.path().string(), Line);
                                 Finish(1);
                             }
 
@@ -253,7 +252,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                             }
                         }
                         if (!library) {
-                            std::println("{}ERR{}: Library not found! (Try installing it in ~/.local/state/c++make/libraries/\"Your library\"), Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            std::println("{}ERR{}: Library not found! (Try installing it in ~/.local/state/c++make/libraries/\"Your library\"), Content \"{}\"", REDB, RESET, Line);
                             Finish(1);
                         }
                         std::println("{}INF{}: Using library {}", YELLOW, RESET, l.at(1));
@@ -267,7 +266,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                         break;
                     case _str2int("Cores"):
                         if (!(l.size() > 1)) {
-                            std::println("{}ERR{}: Set Linker argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            std::println("{}ERR{}: Set Linker argument, Content \"{}\"", REDB, RESET, Line);
                             Finish(1);
                         }
                         if (l.back() == "All") {
@@ -279,7 +278,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                         Inf->OnlyLinker = true; break;
                     case _str2int("UseLauncher"):
                         if (!(l.size() > 2)) {
-                            std::println("{}ERR{}: Set Launcher argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            std::println("{}ERR{}: Set Launcher argument, Content \"{}\"", REDB, RESET, Line);
                             Finish(1);
                         }
                         Inf->Launchers.push_back(std::make_tuple(l.at(1), l.at(2))); break;
@@ -297,8 +296,6 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                 Inf->Run.push_back(Line); break;
             default: break;
         }
-
-        _Index++;
     }
     #ifdef __linux
         Inf = &OsEntryInfo.OnlyLinux;
