@@ -5,6 +5,7 @@
 #include <format>
 #include <print>
 #include <string>
+#include <sys/types.h>
 #include <tuple>
 #include <vector>
 
@@ -31,19 +32,20 @@ static void Finish(int status) {
 }
 
 typedef struct EntryInfo {
-    std::vector<std::string> Files;
-    std::string BuildDirectory = "";
-    std::vector<std::string> LinkArgs;
-    std::vector<std::tuple<std::string, std::string>> CompileArgs;
     std::string ProjectName = "";
-    bool Ccache = false;
-    std::vector<std::string> Run;
-    std::vector<std::tuple<std::string, std::string>> CompilerFilter;
     std::string OutputFile = "";
     std::string Linker = "";
+    std::string BuildDirectory = "";
+    std::vector<std::string> LinkArgs;
+    std::vector<std::string> Run;
+    std::vector<std::string> Files;
+    std::vector<std::tuple<std::string, std::string>> CompileArgs;
+    std::vector<std::tuple<std::string, std::string>> CompilerFilter;
+    std::vector<std::tuple<std::string, std::string>> Launchers;
     bool CleanUpFirst = false;
-    int Cores = 0;
+    bool Ccache = false;
     bool OnlyLinker = false;
+    int Cores = 0;
 } EntryInfo;
 
 extern void MakeFile(EntryInfo*);

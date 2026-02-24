@@ -177,6 +177,21 @@ const EntryInfo GetInfFromJson(const std::filesystem::path path) {
                             }
                             Inf.OnlyLinker = obj.value.get_bool().value();
                             break;
+                        case str2int("use-launcher"):
+                            if (obj.value.type() != simdjson::dom::element_type::ARRAY) {
+                                std::println("{}ERR{}: IN \"{}\" THAT IS IN \"{}\": Wrong type (STRING): {}", REDB, RESET, obj.key.data(), json.key, obj.value.get_string()->data());
+                                Finish(1);
+                            }
+                            if (!obj.value.get_array()->at(0).is_string()) {
+                                std::println("{}ERR{}: IN \"{}\" THAT IS IN \"{}\": Wrong type (STRING)", REDB, RESET, obj.key.data(), json.key);
+                                Finish(1);
+                            }
+                            if (!obj.value.get_array()->at(1).is_string()) {
+                                std::println("{}ERR{}: IN \"{}\" THAT IS IN \"{}\": Wrong type (STRING)", REDB, RESET, obj.key.data(), json.key);
+                                Finish(1);
+                            }
+                            Inf.Launchers.push_back(std::make_tuple(obj.value.get_array()->at(0)->get_string()->data(), obj.value.get_array()->at(1)->get_string()->data()));
+                            break;
                         case str2int("use-lib"):
                             if (obj.value.type() != simdjson::dom::element_type::ARRAY) {
                                 std::println("{}ERR{}: IN \"{}\" THAT IS IN \"{}\": Wrong type (STRING): {}", REDB, RESET, obj.key.data(), json.key, obj.value.get_string()->data());

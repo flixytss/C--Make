@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -126,7 +128,7 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                     ReadMode = "Mac"; break;
                 default:
                     if (Line.starts_with("#")) {
-                        for (int index = 0; index < 11 /* MODIFY */; index++) { // Modify Every time a new command is created
+                        for (int index = 0; index < 11 /* MODIFY */; index++) { // Modify Every time a new section is created
                             if (IsItVerySimilar(Parameter, CommandsForSyntaxisFallback[index], CommandsForSyntaxisFallback[index].size() / 2)) {
                                 std::println("{}ERR{}: Don't you mean {}?, Line: {}", REDB, RESET, CommandsForSyntaxisFallback[index], Line);
                                 Finish(1);
@@ -161,15 +163,15 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                 // Check if the "file" is a directory
                 if (std::filesystem::is_directory(l.at(0))) {
                     for (const auto& path : std::filesystem::directory_iterator(l.at(0))) {
-                        if (l.size() >= 1 && l.back() != l.front()) {
+                        if (l.size() > 1) {
                             if ((std::string){path.path().filename()}.ends_with(l.at(1)))
                                 Inf->Files.push_back(path.path());
                         } else
                             Inf->Files.push_back(path.path());
-                        //std::println("{}", (std::string){path.path()});
                     }
-                } else
+                } else {
                     Inf->Files.push_back(l.at(0));
+                }
                 break;
             case _str2int("Largs"):
                 if (Line.empty() || Line.starts_with("#")) continue;
@@ -275,6 +277,12 @@ EntryInfo* GetInf(std::string File, bool verbose) {
                         Inf->Cores = atoi(l.back().c_str()); break;
                     case _str2int("OnlyUseLinker"):
                         Inf->OnlyLinker = true; break;
+                    case _str2int("UseLauncher"):
+                        if (!(l.size() > 2)) {
+                            std::println("{}ERR{}: Set Launcher argument, Content \"{}\", Line: {}", REDB, RESET, Line, _Index);
+                            Finish(1);
+                        }
+                        Inf->Launchers.push_back(std::make_tuple(l.at(1), l.at(2))); break;
                     default:
                         std::println("{}ERR{}: That info dosen't exists, Content: {}", REDB, RESET, l.at(0));
                         Finish(1);

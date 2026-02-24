@@ -68,6 +68,7 @@ const std::string librariesdirectory = home + "/.local/state/c++make/libraries";
 std::vector<std::filesystem::directory_entry> libraries;
 int RunShellCommand(const std::string c);
 const EntryInfo GetInfFromJson(const std::filesystem::path path);
+extern void MakeSmartFile(EntryInfo inf);
 
 const std::string toupper(const std::string str) {
     for (int i = 0; i < str.size(); i++) if ((str)[i]>=0x61&&(str)[i]<=0x7A) *(char*)&str[i]-=32;
@@ -157,10 +158,6 @@ int main(int argc, char** argv) {
                 for (auto path : libraries) { std::println("\t{}: {}", path.path().filename().string(), path.path().string()); }
                 break;
             case str2int("json"):
-                if ( !argv[Index + 1] ) {
-                    std::println("{}ERR{}: Command Syntax error", REDB, RESET);
-                    Finish(1);
-                }
                 if ((std::string){argv[Index + 1] ? argv[Index + 1] : ""} == "template") {
                     std::string cdirectory = ".";
 
@@ -184,7 +181,7 @@ int main(int argc, char** argv) {
                         #endif
                     #endif
                     WriteFile(cdirectory + "/compile_flags.txt", "-std=gnu++23\n-Iinclude");
-                    WriteFile("create.json", FileJsonToCopy);
+                    WriteFile(cdirectory + "/create.json", FileJsonToCopy);
 
                     Finish(0);
                 }
@@ -198,7 +195,7 @@ int main(int argc, char** argv) {
                 }
                 
                 inf_ptr = new EntryInfo;
-                *inf_ptr = GetInfFromJson(std::filesystem::path(argv[Index + 1]));
+                *inf_ptr = GetInfFromJson(std::filesystem::path(argv[Index + 1] ? argv[Index + 1] : "create.json"));
                 MakeFile(inf_ptr);
                 delete inf_ptr;
 
@@ -228,7 +225,10 @@ int main(int argc, char** argv) {
                         #endif
                         WriteFile(cdirectory + "/create.conf", "C++MakeSignature!\n#: File\nsrc .cpp\n#: Link args\n-largumentsea\n#: Compiling args\n--std=gnu++23 clang++\n#: Out\nbuild\n#: Project\n\"Default Template\"\n#: Include\ninclude clang++\n#: Info\nUseCcache\n#: Run\n#: Compilers filters\n.cpp clang++");
                     #endif
-                    WriteFile(cdirectory + "/compile_flags.txt", "-std=gnu++23\n-Iinclude");
+                    WriteFile(cdirectory + "/compile_flags.txt", "-Iinclude");
+                    #ifndef CCP23
+                        AppendFile(cdirectory + "/compile_flags.txt", "\n-std=gnu++23\n");
+                    #endif
 
                     Finish(0);
                 }
@@ -249,6 +249,7 @@ int main(int argc, char** argv) {
                     Finish(1);
                 }
                 MakeFile(inf_ptr);
+
                 Finish(0);
             default:
                 if (!(Index > 0)) break;

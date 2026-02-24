@@ -86,6 +86,10 @@ void MakeFile(EntryInfo* inf) {
         Finish(1);
     }
     const std::string file = inf->OutputFile.empty() ? "Makefile" : inf->OutputFile;
+    if (inf->ProjectName.contains(' ')) {
+        std::string __new = std::format("\"{}\"", inf->ProjectName);
+        inf->ProjectName = __new;
+    }
 
     std::vector<std::string> Outs;
     std::vector<std::string> OutsForFiles;
@@ -127,7 +131,7 @@ void MakeFile(EntryInfo* inf) {
 
         for (const auto& tuple : inf->CompilerFilter) {
             if ((std::string){path.filename()}.ends_with(std::get<0>(tuple))) {
-                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + std::get<1>(tuple)}; break;
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")}}; break;
             }
         }
         std::string ActualCompiler;
@@ -152,7 +156,7 @@ void MakeFile(EntryInfo* inf) {
                 break;
             case NASM:
                 ActualCompiler = SetCompiler(CompilersInUse, NASM);
-                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (std::string){(inf->Ccache ? "ccache " : "")} + ActualCompiler};
+                _file = {file.c_str(), (std::string){inf->BuildDirectory + "/" + (std::string){path.filename()}} + ".out", (inf->Ccache ? "ccache " : "")};
                 OutsForFiles.push_back(inf->BuildDirectory + "/" + (std::string){path.filename()} + ".out");
                 AddArguments(*inf, &_file);
                 break;
@@ -198,7 +202,16 @@ void MakeFile(EntryInfo* inf) {
 
     int JustAConuter = 0;
     for (const enum Compilers& Com : CompilersInUse) {
-        AppendFile(file, std::format("Var{} = {}\n", JustAConuter, Compilers[Com]));
+        AppendFile(file, std::format("Var{} = ", JustAConuter));
+        if (inf->Launchers.size()) {
+            for (const auto tuple : inf->Launchers) {
+                if ((std::string){Compilers[Com]} == std::get<1>(tuple)) {
+                    AppendFile(file, std::get<0>(tuple) + " ");
+                }
+            }
+        }
+        AppendFile(file, std::format("{}\n", Compilers[Com]));
+
         JustAConuter++;
     }
     AppendFile(file, "\n");
@@ -211,7 +224,7 @@ void MakeFile(EntryInfo* inf) {
         AppendFile(file, (std::string){"\nparallel:\n\t${MAKE} "} + (EnableCores ? "" : std::format("-f {} ", inf->OutputFile)) + "-j" + std::to_string(inf->Cores)  + " all\n\tfalse\n"); // Call itselfs with the wanted cores
         func.Utils.push_back("@echo -e \"[\\e[1;32m Parallel build exited correctly, If the makefile says error. Just ignore it... \033[0m]\"\n");
     } else
-        AppendFile(file, ".DEFAULT_GOAL := all\n");
+        AppendFile(file, ".DEFAULT_GOAL := Link\n");
     for (const std::string& dep : OutsForParallel)
         func.Dependson.push_back(dep);
     if (inf->OnlyLinker) {
@@ -224,7 +237,7 @@ void MakeFile(EntryInfo* inf) {
         File nothing {"", "", ""}; nothing.command.clear();
 
         Function cleanrun {"clean", nothing};
-        cleanrun.Utils.push_back("@echo [INFO] Cleaning...");
+        cleanrun.Utils.push_back("@echo \"[INFO] Cleaning...\"");
         for (const std::string out : OutsForFiles) { cleanrun.Utils.push_back("-@rm " + out); }
 
         Functions.push_back(cleanrun);

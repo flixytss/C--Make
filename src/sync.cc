@@ -3,8 +3,7 @@
 #include <exutils.h>
 #include <thread>
 
-bool DidTheFileChange(const std::string& file)
-{
+bool DidTheFileChange(const std::string& file) {
     static std::string oldContent;
     std::string newContent = ReadFile(file);
 
@@ -22,11 +21,12 @@ void run(std::string file, EntryInfo* inf) {
     MakeFile(inf);
 }
 void BackgroundProccess(std::string file) {
+    EntryInfo* inf;
     while (true) {
         if (DidTheFileChange(file)) {
-            auto inf = GetInf(file);
+            inf = GetInf(file);
             std::jthread(run, file, inf).detach();
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
